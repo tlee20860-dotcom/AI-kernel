@@ -1,8 +1,8 @@
 # R-01 規則對照表
 
 最後更新：ai-system-20261019-010
-Version: 1792341600
-Writer: ai-system-20261019-010#022
+Version: 1792352000
+Writer: ai-system-20261019-010#067
 用途：舊 A00／C-02 規則 → 新 R00 規則的對照、處置、證據。
 
 ---
@@ -89,6 +89,6 @@ Writer: ai-system-20261019-010#022
 
 /* ═══ EOF ═══
 F: ai-kernel/docs/r-rules/R-01-mapping.md
-V: 1792341600
-W: ai-system-20261019-010#022
+V: 1792352000
+W: ai-system-20261019-010#067
 ═══ */
