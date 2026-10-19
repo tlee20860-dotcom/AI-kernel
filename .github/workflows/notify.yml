@@ -1,6 +1,3 @@
-# ============================================
-# notify.yml — AI-kernel 更新時通知 AI-infra
-# ============================================
 name: Notify AI-infra
 
 on:
@@ -25,6 +22,6 @@ jobs:
 
 # ═══ EOF ═══
 # F: AI-kernel/.github/workflows/notify.yml
-# V: 1792381000
-# W: ai-system-20261019-010#139
+# V: 1792396000
+# W: ai-system-20261019-010#174
 # ═══ EOF ═══
