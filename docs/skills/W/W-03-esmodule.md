@@ -1,10 +1,9 @@
 # W-03 純前端 ES Module 架構（Web App 通用）
 
-最後更新：B34-3
-Version: 1791899620
-Batch: B34-3
-Writer: A20261013-004#065
-用途：純 HTML + ES Module 架構通用原則
+最後更新：2026-10-21
+Version: 1792581004
+Writer: ai-system-20261021-004#4
+用途：純 HTML + ES Module 架構通用原則與目錄配置
 
 ---
 
@@ -80,23 +79,42 @@ Writer: A20261013-004#065
 |---|---|
 | 檔案 ≤ 800 行 | 超過拆檔 |
 | 每檔獨立 | 不合併 |
-| EOF 必加 | F/V/B/W |
+| EOF 必加 | F/V/W 三行 |
 
 ---
 
-## 八、關聯檔案
+## 八、標準目錄配置（通用）
+
+| 目錄 | 建議檔數 | 內容職責 |
+|---|---|---|
+| `js/config` | 5~10 | 常數、環境配置、各類 Registry |
+| `js/core` | 5~10 | 狀態管理 (state)、API 核心、登入驗證、共用工具 |
+| `js/lib` | 10~20 | 通用邏輯（日期處理、格式化、Modal 封裝） |
+| `js/engines` | 3 | page / data / render |
+| `js/blocks` | 5 | stats / list / filter / detail / form |
+| `js/ui` | 5~10 | 獨立 UI 元件（toast, modal, tabs） |
+| `js/layout` | 3 | 外框佈局（navbar, sidebar, app-shell） |
+| `js/entity` | 3~5 | 實體資料的解析、驗證與 Modal |
+| `js/shared` | 5~15 | 跨頁面共用元件（表格、卡片） |
+| `js/pages` | 依頁面數 | 各頁面的 Schema 定義 |
+| `functions/api` | 依 API 數 | CF Pages Functions 後端邏輯 |
+| `css/` | 4~6 | theme / layout / components / utilities |
+| 根目錄 | — | `*.html` 頁面、`sw.js`、`manifest.json` |
+
+---
+
+## 九、關聯檔案
 
 | 主題 | 檔案 |
 |---|---|
 | Page Schema | W-05-schema.md |
 | PWA + SW | W-04-pwa.md |
-| 本專案架構 | P-01-index.md |
+| 本專案架構 | 詳見專案包（如 P-01-index.md） |
 
 ---
 
 /* ═══ EOF ═══
-F: docs/W-03-esmodule.md
-V: 1791899620
-B(歷史): B34-3
-W: A20261013-004#065
+F: W-03-esmodule.md
+V: 1792581004
+W: ai-system-20261021-004#4
 ═══ */
