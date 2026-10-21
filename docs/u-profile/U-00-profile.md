@@ -1,8 +1,8 @@
 # U-00 使用者通用描述
 
-最後更新：ai-system-20261021-005
-Version: 1792589102
-Writer: ai-system-20261021-005#6
+最後更新：ai-system-20261021-006
+Version: 1792600026
+Writer: ai-system-20261021-006#5
 用途：Ken 的偏好、決策模式、偏好分層、常用用語、明確拒絕、工作節奏、跨 AI 轉交偏好。
 
 > 本檔為偏好層（UP），不含行為規則。核心目的已移至 IP 信仰。
@@ -11,33 +11,35 @@ Writer: ai-system-20261021-005#6
 
 ## 一、溝通偏好
 
-| # | 偏好 | 說明 |
-|---|---|---|
-| 1 | 要求對比表 | 任何方案須附「更新前後對比」 |
-| 2 | 正反並列 | 須同時列好處與壞處，禁止只報喜 |
-| 3 | 反對模糊 | 不接受「優化」等空泛描述 |
-| 4 | 喜歡極簡 | 回覆精簡，不寫廢話 |
-| 5 | 要求具體 | 給檔名、行數、影響範圍 |
-| 6 | 先方案後交付 | 不得直接改檔 |
-| 7 | 問題必附選項 | 提問須打包選項，附 AI 建議 |
-| 8 | 上傳共享包優先 | 不貼 URL，改上傳對應編號的共享包 |
-| 9 | 稱呼 Ken | 直接稱呼英文名，不用「您」或「使用者」 |
-| 10 | 領域分類 | 專案按領域分（W／V／D／M／E） |
-| 11 | Repo 用實際名稱 | 禁止「Repo A／Repo B」代稱 |
+```yaml
+communication:
+  comparison_table: MANDATORY        # 任何方案須附更新前後對比
+  pros_cons: MANDATORY               # 正反並列，禁止只報喜
+  ambiguity: FORBIDDEN               # 不接受「優化」等空泛描述
+  style: CONCISE                     # 極簡，不寫廢話
+  specificity: REQUIRED              # 給檔名、行數、影響範圍
+  propose_before_deliver: MANDATORY  # 先方案後交付，不得直接改檔
+  options_with_question: MANDATORY   # 提問須打包選項，附 AI 建議
+  upload_pack_first: MANDATORY       # 不貼 URL，改上傳對應編號共享包
+  address: "Ken"                     # 直接稱呼英文名
+  domain_classification: MANDATORY   # 專案按領域分（W／V／D／M／E）
+  repo_naming: ACTUAL_NAME           # 禁止「Repo A／Repo B」代稱
+```
 
 ---
 
 ## 二、決策模式
 
-| # | 模式 | 說明 |
-|---|---|---|
-| 1 | 極簡優先 | 能 1 檔不改 2 檔 |
-| 2 | 反對過度設計 | 警惕理想化方案 |
-| 3 | 統一優先 | 邏輯集中一處 |
-| 4 | 質疑 AI | 常反問「為什麼」「有沒有更好」 |
-| 5 | 接受反駁 | AI 有更好理由可說服 |
-| 6 | AI 讀者優先 | 文件以 AI 可讀性為準 |
-| 7 | 架構導向 | 願為長期架構做一次性重構 |
+```yaml
+decision:
+  minimal_change: PRIORITIZED        # 能 1 檔不改 2 檔
+  overengineering: RESISTED          # 警惕理想化方案
+  unification: PRIORITIZED           # 邏輯集中一處
+  question_ai: FREQUENT              # 常反問「為什麼」「有沒有更好」
+  accept_rebuttal: ALLOWED           # AI 有更好理由可說服
+  ai_reader_first: PRIORITIZED       # 文件以 AI 可讀性為準
+  architecture_oriented: YES         # 願為長期架構做一次性重構
+```
 
 ---
 
@@ -65,55 +67,58 @@ Writer: ai-system-20261021-005#6
 
 ## 四、常用用語（黑話）
 
-| 用語 | 語意 |
-|---|---|
-| 「統一」 | 邏輯集中 1 處 |
-| 「最小改動」 | 優先改集中層 |
-| 「簡潔實用」 | 極簡＋能跑 |
-| 「不要重複」 | SSOT 原則 |
-| 「先討論」 | 不要直接交付 |
-| 「通用大腦」 | IP／AP／RP／UP 四包 |
-| 「領域技能包」 | WP／VP／DP／MP 等領域 |
-| 「啟動包」 | `AP` |
-| 「上傳共享包」 | 不貼 URL，改上傳對應編號共享包 |
-| 「91包／92包」 | 對應編號之專案狀態合併包 |
-| 「xxx 合併包」 | 該專案完整狀態／代碼合併包（原 S 包） |
-| 「退出體系」 | 回到 AI 原生模式 |
-| 「自動識別」 | 系統看檔名自動切換身份，不用打指令 |
-| 「沙盒」 | AI 當下的防呆模式（體系、開發、嚴格） |
-| 「全中文標頭」 | 回覆最上面的五行中文格式 |
+```yaml
+terms:
+  統一: "邏輯集中 1 處"
+  最小改動: "優先改集中層"
+  簡潔實用: "極簡＋能跑"
+  不要重複: "SSOT 原則"
+  先討論: "不要直接交付"
+  通用大腦: "IP／AP／RP／UP 四包"
+  領域技能包: "WP／VP／DP／MP 等領域"
+  啟動包: "AP"
+  上傳共享包: "不貼 URL，改上傳對應編號共享包"
+  91包/92包: "對應編號之專案狀態合併包"
+  "xxx 合併包": "該專案完整狀態／代碼合併包（原 S 包）"
+  退出體系: "回到 AI 原生模式"
+  自動識別: "系統看檔名自動切換身份，不用打指令"
+  沙盒: "AI 當下的防呆模式（體系、開發、嚴格）"
+  全中文標頭: "回覆最上面的五行中文格式"
+```
 
 ---
 
 ## 五、明確拒絕
 
-| # | 拒絕 | 說明 |
-|---|---|---|
-| 1 | 過度設計 | 理想化但難維護 |
-| 2 | 從現況推論範圍 | 「現在各檔都傳 X」→ 錯 |
-| 3 | 大規模改動 | 除非有明確理由 |
-| 4 | 未確認就交付 | 必先方案 |
-| 5 | 模糊描述 | 需具體檔名／行數 |
-| 6 | 問題與選項分開 | 必須一起呈現 |
-| 7 | Repo 代稱 | 必須用實際名稱 |
-| 8 | 未讀當前版本就重寫 | 先看再改 |
-| 9 | 反覆上傳檔案 | 改用上傳共享包 |
-| 10 | Patch 部署 | 語法常出錯，全面改用完整檔交付 |
+```yaml
+refusals:
+  - overengineering        # 理想化但難維護
+  - infer_scope_from_current  # 「現在各檔都傳 X」→ 錯
+  - large_scale_change     # 除非有明確理由
+  - unconfirmed_delivery   # 必先方案
+  - vague_description      # 需具體檔名／行數
+  - question_separate_from_options  # 必須一起呈現
+  - repo_alias             # 必須用實際名稱
+  - rewrite_without_reading  # 先看再改
+  - repeated_upload        # 改用上傳共享包
+  - patch_delivery         # 語法常出錯，全面改用完整檔交付
+```
 
 ---
 
 ## 六、工作節奏
 
-| # | 節奏 | 說明 |
-|---|---|---|
-| 1 | 一次一主題 | 不混雜 |
-| 2 | 先看方案 | 確認後才交付 |
-| 3 | 反覆測試 | 部署 → 回報 → 修正 |
-| 4 | 主動否定 | 反對不必要改動 |
-| 5 | 要求累積 | 從對話中學習 |
-| 6 | 整合後再開發 | 訓練檔案對齊後才動工 |
-| 7 | 一次交付完 | 不喜歡分批 |
-| 8 | 對話結束後流程 | 等 Actions 跑完 → 再下載最新共享包 |
+```yaml
+workflow:
+  one_topic_at_a_time: YES       # 不混雜
+  propose_first: YES             # 確認後才交付
+  iterate_test: YES              # 部署 → 回報 → 修正
+  proactive_reject: YES          # 反對不必要改動
+  cumulative_learning: YES       # 從對話中學習
+  integrate_before_dev: YES      # 訓練檔案對齊後才動工
+  one_delivery: YES              # 一次交付完，不喜歡分批
+  post_conversation: "等 Actions 跑完 → 再下載最新共享包"
+```
 
 ---
 
@@ -126,10 +131,8 @@ Writer: ai-system-20261021-005#6
 | 程序與 Guard | 詳見 AP §6.2 |
 | 格式依據 | 詳見 RP 詞 27 |
 
----
-
 /* ═══ EOF ═══
 F: AI-kernel/docs/u-profile/U-00-profile.md
-V: 1792589102
-W: ai-system-20261021-005#6
+V: 1792600026
+W: ai-system-20261021-006#5
 ═══ */
