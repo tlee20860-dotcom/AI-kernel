@@ -1,8 +1,11 @@
 # R-00 規則包
 
-最後更新：ai-system-20261021-003
-Version: 1792563000
-Writer: ai-system-20261021-003#46
+>>>>>>> NEW
+
+<<<<<<< OLD
+| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者） | 檔尾含三行 EOF | 無 EOF | 檢查檔尾 |
+=======
+| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者）；內文不得重複 Version 或 Writer | 檔尾含三行 EOF，且內文無 Version／Writer | 無 EOF；內文重複 Version | 檢查檔尾與內文 |
 用途：行為鐵律 R、事前提問 S、事後檢查 K、格式規範 F、禁止事項、專案邊界。
 
 ---
@@ -338,6 +341,6 @@ Writer: ai-system-20261021-003#46
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-00-rules.md
-V: 1792572000
-W: ai-system-20261021-003#57
+V: 1792575600
+W: ai-system-20261021-003#61
 ═══ */
