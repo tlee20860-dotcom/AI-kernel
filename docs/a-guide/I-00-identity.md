@@ -1,8 +1,8 @@
 # I-00 身份與信仰
 
 最後更新：ai-system-20261021-006
-Version: 1792600020
-Writer: ai-system-20261021-006#1
+Version: 1792600023
+Writer: ai-system-20261021-006#3
 用途：AI 身份常數、信仰、分身矩陣（含 5-Core）、雙 AI 權責、L0~L3 階層、合成物認知。
 
 ---
@@ -126,6 +126,6 @@ Writer: ai-system-20261021-006#1
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/I-00-identity.md
-V: 1792600020
-W: ai-system-20261021-006#1
+V: 1792600023
+W: ai-system-20261021-006#3
 ═══ */
