@@ -1,9 +1,8 @@
 # W-02 Cloudflare Pages Functions 規則（Web App 通用）
 
-最後更新：B34-3
-Version: 1791899560
-Batch：B34-3
-Writer: A20261013-004#065
+最後更新：2026-10-21
+Version: 1792581003
+Writer: ai-system-20261021-004#3
 用途：CF Pages Functions 通用規則（跨專案）
 
 ---
@@ -65,7 +64,7 @@ Writer: A20261013-004#065
 
 ---
 
-## 六、Response 格式
+## 六、Response 格式與錯誤碼
 
 | 欄位 | 值 |
 |---|---|
@@ -73,7 +72,20 @@ Writer: A20261013-004#065
 | error | ERROR_CODE（失敗時） |
 | message | 錯誤訊息（失敗時） |
 
-**ERROR_CODE 對照**：見 P-08-api.md §三。
+**通用 ERROR_CODE 對照**：
+
+| Code | HTTP | 說明 |
+|---|---|---|
+| UNAUTHORIZED | 401 | 未登入 |
+| FORBIDDEN | 403 | 無權限 |
+| MISSING_FIELDS | 400 | 缺少欄位 |
+| INVALID_BODY | 400 | 無效 body |
+| BAD_REQUEST | 400 | 請求錯誤 |
+| NOT_FOUND | 404 | 找不到 |
+| CONFLICT | 409 | 衝突 |
+| INTERNAL | 500 | 內部錯誤 |
+
+*(註：各專案可依業務需求額外定義專屬錯誤碼，如 NAME_DUPLICATE)*
 
 ---
 
@@ -81,15 +93,14 @@ Writer: A20261013-004#065
 
 | 主題 | 檔案 |
 |---|---|
-| 本專案 API 契約 | P-08-api.md |
-| 本專案事故（P29） | P-10-incident.md §五 |
+| 本專案 API 契約 | 詳見專案包（如 P-08-api.md） |
+| 本專案事故 | 詳見專案包（如 P-10-incident.md） |
 | Firebase 結構 | W-01-firebase.md |
 
 ---
 
 /* ═══ EOF ═══
-F: docs/W-02-functions.md
-V: 1791899560
-B(歷史): B34-3
-W: A20261013-004#065
+F: W-02-functions.md
+V: 1792581003
+W: ai-system-20261021-004#3
 ═══ */
