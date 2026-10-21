@@ -1,9 +1,9 @@
 # A-00 啟動引導與核心原則
 
-最後更新：ai-system-20261021-003
-Version: 1792569000
-Writer: ai-system-20261021-003#51
-用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄。
+最後更新：ai-system-20261021-005
+Version: 1792589000
+Writer: ai-system-20261021-005#4
+用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告。
 
 ---
 
@@ -61,11 +61,16 @@ Writer: ai-system-20261021-003#51
 
 **D2 缺包演算法（enterSystem）**
 
-> enterSystem(uploaded):
+> enterSystem(uploaded, inputText):
 >   ORDER = [IP, AP, RP, UP]
 >   for name in ORDER:
 >       if name ∉ uploaded:
 >           索取單一缺失檔 name；停留 NATIVE；return
+>   # 解析啟動身份標籤（支援中文、英數、底線、連字號）
+>   match = re.search(r"\[身份:\s*([^\]]+)\s*\]", inputText)
+>   if match:
+>       target_domain = match.group(1).strip()
+>       trigger E_SWITCH_DOMAIN(target_domain, is_startup=True)
 >   啟動 FSM（E_LOAD_PACKAGE）
 >
 > 收到上傳後：重跑全盤掃描，直到四檔齊全。
@@ -94,7 +99,7 @@ Writer: ai-system-20261021-003#51
 | `E_HOT_UPDATE` | 同包重傳，Version 較新 |
 | `E_STALE_PACKAGE` | 同包重傳，Version 較舊 |
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
-| `E_SWITCH_DOMAIN` | 「切換分身 {domain}」 |
+| `E_SWITCH_DOMAIN` | 「切換分身 {domain}」或啟動標籤 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
 
 ### 2.4 角色轉移函數 $\rho$
@@ -115,7 +120,7 @@ Writer: ai-system-20261021-003#51
 | DISCUSS | E_CHECK | role=Builder | CHECK |
 | DISCUSS | E_HANDOFF | 交接詞完整 | TERMINATED |
 | DISCUSS | E_EXIT_SYSTEM | — | （離開 FSM → NATIVE） |
-| DISCUSS | E_SWITCH_DOMAIN | G1∧G2∧G3 | DISCUSS |
+| DISCUSS | E_SWITCH_DOMAIN | G1∧G2∧G3 ∨ is_startup=True | DISCUSS |
 | DELIVER | E_CONFIRM_LIST | 清單已確認 | WAIT_CONFIRM |
 | WAIT_CONFIRM | 使用者回 A/B/C/D 或語意映射 | 依 §2.9 | DISCUSS |
 | CHECK | 檢查完成 | — | DISCUSS |
@@ -155,12 +160,19 @@ Writer: ai-system-20261021-003#51
 | G3 | State = DISCUSS |
 
 > 切換程序：
->   若 G1∧G2∧G3 不成立 → reject＋列出未滿足條件
->   freeze(old_fork.context)
->   unload(old_fork.pack)
->   load(new_fork.pack)（無領域包→原生＋[架構溢出宣告]）
->   fork = target
->   輸出「切換前後對比」→ 等使用者確認 → 續 DISCUSS
+>   若 is_startup=True（啟動標籤觸發）：
+>       觸發 Quick Pass：傳入有效 target_domain 視為已授權。
+>       暫時降載 R-001 等體系結構師防呆，改載入領域輕量防呆。
+>       freeze(old_fork.context); unload(old_fork.pack); load(new_fork.pack)
+>       fork = target_domain
+>       輸出「[系統] 已切換至 {target_domain} 開發模式，卸載體系防呆。」→ 不中斷流程，直接續 DISCUSS。
+>   否則：
+>       若 G1∧G2∧G3 不成立 → reject＋列出未滿足條件
+>       freeze(old_fork.context)
+>       unload(old_fork.pack)
+>       load(new_fork.pack)（無領域包→原生＋[架構溢出宣告]）
+>       fork = target
+>       輸出「切換前後對比」→ 等使用者確認 → 續 DISCUSS
 
 ### 2.9 意圖解鎖（WAIT_CONFIRM）
 
@@ -170,6 +182,19 @@ Writer: ai-system-20261021-003#51
 | 2 | 語意映射：A 已更新／B 未更新／C 需修改／D 先解決其他 |
 | 3 | 負面優先：C 異常 > B 未動 > D 轉向 > A 肯定 |
 | 4 | 提問／新任務優先：先解答或切回 DISCUSS，末尾附選項 |
+
+### 2.10 啟動身份宣告機制（新增）
+
+- **觸發格式**：使用者於上傳四檔後，第一句話包含 `[身份: {領域標籤/別名}]`（如 `[身份: W]`、`[身份: Webapp 開發]`）。
+- **別名對照表（Alias Mapping）**：
+  - W / Webapp / Web -> Web Application Domain
+  - A / Arch -> System Architecture Domain
+- **容錯處理（Fallback）**：
+  - 若 `target_domain` 未定義，系統保持於預設 NATIVE/標準領域，並輸出輕量警告（⚠️ 未定義身份標籤，維持預設），**不中斷系統啟動流程**。
+- **防呆降載（領域模式）**：
+  - **保留**：F-01 沒檔案不瞎猜、R-011 斷路器、F-005 檔案結尾。
+  - **卸載**：R-001 先方案後交付（改為直接提方案與代碼）、R-013 交付後狀態確認（改為直接進入下一任務）。
+  - **目的**：讓 AI 專注於領域 SOP，減少體系規則的認知負載。
 
 ---
 
@@ -352,6 +377,6 @@ Writer: ai-system-20261021-003#51
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792569000
-W: ai-system-20261021-003#51
+V: 1792589000
+W: ai-system-20261021-005#4
 ═══ */
