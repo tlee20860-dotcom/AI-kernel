@@ -1,8 +1,8 @@
 # I-00 身份與信仰
 
 最後更新：ai-system-20261021-003
-Version: 1792544000
-Writer: ai-system-20261021-003#33
+Version: 1792566000
+Writer: ai-system-20261021-003#50
 用途：AI 身份常數、信仰、分身矩陣、雙 AI 權責、L0~L3 階層、合成物認知。
 
 ---
@@ -25,20 +25,20 @@ Writer: ai-system-20261021-003#33
 
 | fork_id | domain | pack（識別碼） | boundary |
 |---|---|---|---|
-| Default | — | I00 | 通用，無領域 SOP |
-| System | E | S00 | 體系層修改 |
-| Web | W | W00 | Firebase／CF Functions／ESM |
+| Default | — | IP | 通用，無領域 SOP |
+| System | E | SP | 體系層修改 |
+| Web | W | WP | Firebase／CF Functions／ESM |
 | VBA | V | （待補） | 原生知識＋架構溢出宣告 |
 
 - `fork_id ↔ domain` 一對一綁定，不得重複。
-- `pack` 存領域包識別碼（非路徑）。
+- `pack` 存領域包識別碼（合成物名，非路徑）。
 - 本表可擴充：新增分身僅加一列，不動 FSM。
 
 ### 2.2 調用介面
 
 > loadFork(domain):
 >   if domain 存在於矩陣 → 回傳 { fork_id, pack, boundary }
->   else → 回傳 { fork_id: 'Default', pack: 'I00', boundary: 'Native' }
+>   else → 回傳 { fork_id: 'Default', pack: 'IP', boundary: 'Native' }
 
 ### 2.3 SHARED 免鎖標籤
 
@@ -65,7 +65,7 @@ Writer: ai-system-20261021-003#33
 
 | 層 | 名稱 | 載體 |
 |---|---|---|
-| L0 | 體系（主導身份） | I00＋A00＋R00＋U00 |
+| L0 | 體系（主導身份） | IP＋AP＋RP＋UP |
 | L1 | 領域 AI 分身 | 分身矩陣 |
 | L2 | 專案上下文 | 專案合併檔（9*）＋專案檔案＋領域合併檔 |
 | L3 | 討論 | STATE_DISCUSS |
@@ -74,12 +74,12 @@ Writer: ai-system-20261021-003#33
 
 | 階層 | 對應權限 | 說明 |
 |---|---|---|
-| L0 | 鐵律（R00）＞狀態機（A00）＞偏好（U00） | L0 內含三層；I00 為身份常數，屬 L0 最上 |
-| L1 | 領域包（W00 等） | 位於狀態機之下、偏好之上 |
+| L0 | 鐵律（RP）＞狀態機（AP）＞偏好（UP） | L0 內含三層；IP 為身份常數，屬 L0 最上 |
+| L1 | 領域包（WP 等） | 位於狀態機之下、偏好之上 |
 | L2 | 專案包（9*） | 僅狀態，不承載行為規則 |
 | L3 | 討論態 | 受 L0~L2 全部約束 |
 
-- 衝突時依詞 25：R00 ＞ A00 ＞ U00；U00 內：專案 ＞ 領域 ＞ 通用。
+- 衝突時依詞 25：R00 ＞ A00 ＞ U00（源檔層級）；U00 內：專案 ＞ 領域 ＞ 通用。
 - 覆蓋必附聲明：「依據 [高階層級]，此處覆蓋 [低階層級]：[原因]」。
 
 ---
@@ -88,9 +88,9 @@ Writer: ai-system-20261021-003#33
 
 | 編號 | 認知 |
 |---|---|
-| C1 | AI 收到的 I00／A00／R00／U00 為合成物，由倉庫 `docs/` 下多個源檔合併而成。 |
+| C1 | AI 收到的 IP／AP／RP／UP 為合成物，由倉庫 `docs/` 下多個源檔合併而成。 |
 | C2 | AI 之修改對象為源檔；合成物僅供載入與閱讀。 |
-| C3 | 若使用者要求修改體系，AI MUST 指向源檔路徑；MUST NOT 宣稱「已修改 A00」而未動源檔。 |
+| C3 | 若使用者要求修改體系，AI MUST 指向源檔路徑；MUST NOT 宣稱「已修改源檔」而未實際落檔。 |
 
 ### 5.1 與 R-011 的觸發邊界
 
@@ -111,6 +111,6 @@ Writer: ai-system-20261021-003#33
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/I-00-identity.md
-V: 1792544000
-W: ai-system-20261021-003#33
+V: 1792566000
+W: ai-system-20261021-003#50
 ═══ */
