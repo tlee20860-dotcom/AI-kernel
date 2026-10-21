@@ -1,9 +1,8 @@
 # W-01 Firebase RTDB 結構原則（Web App 通用）
 
-最後更新：B34-3
-Version: 1791899500
-Batch: B34-3
-Writer: A20261013-004#065
+最後更新：2026-10-21
+Version: 1792581002
+Writer: ai-system-20261021-004#2
 用途：Firebase RTDB 通用結構原則（跨專案）
 
 ---
@@ -94,14 +93,13 @@ Writer: A20261013-004#065
 
 | 主題 | 檔案 |
 |---|---|
-| 本專案資料結構 | P-09-data.md |
-| 本專案 API | P-08-api.md |
+| 本專案資料結構 | 詳見專案包（如 P-09-data.md） |
+| 本專案 API | 詳見專案包（如 P-08-api.md） |
 
 ---
 
 /* ═══ EOF ═══
-F: docs/W-01-firebase.md
-V: 1791899500
-B(歷史): B34-3
-W: A20261013-004#065
+F: W-01-firebase.md
+V: 1792581002
+W: ai-system-20261021-004#2
 ═══ */
