@@ -66,6 +66,6 @@ Writer: ai-system-20261021-003#51
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-03-terms.md
-V: 1792569000
-W: ai-system-20261021-003#51
+V: 1792572000
+W: ai-system-20261021-003#57
 ═══ */

@@ -81,6 +81,6 @@ Writer: ai-system-20261019-010#207
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-02-patterns.md
-V: 1792412000
-W: ai-system-20261019-010#207
+V: 1792572000
+W: ai-system-20261021-003#57
 ═══ */

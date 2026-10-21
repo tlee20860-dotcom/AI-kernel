@@ -338,6 +338,6 @@ Writer: ai-system-20261021-003#46
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-00-rules.md
-V: 1792563000
-W: ai-system-20261021-003#46
+V: 1792572000
+W: ai-system-20261021-003#57
 ═══ */
