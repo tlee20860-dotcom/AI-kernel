@@ -1,15 +1,15 @@
 # A-00 啟動引導與核心原則
 
 最後更新：ai-system-20261021-003
-Version: 1792560000
-Writer: ai-system-20261021-003#37
+Version: 1792563000
+Writer: ai-system-20261021-003#46
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄。
 
 ---
 
 ## 零、身份與原則指向
 
-- 信仰 F-01~F-03、分身矩陣、雙 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`。
+- 信仰 F-01~F-03、分身矩陣、雙 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`（合成物 `IP.md`）。
 - 本檔只負責流程控制（FSM）、不變式、生命週期、出口程序。
 
 ---
@@ -18,19 +18,26 @@ Writer: ai-system-20261021-003#37
 
 ### 1.1 合成物 → 源檔映射
 
-| 合成物 | 源檔 |
-|---|---|
-| I00 | `docs/a-guide/I-00-identity.md` |
-| A00 | `docs/a-guide/A-00-guide.md` |
-| R00 | `docs/r-rules/R-00-rules.md`（含 R01 章節、R02、R04） |
-| U00 | `docs/u-profile/U-00-profile.md` |
-| W00 | `docs/skills/W/W-00~W-05` |
-| 9* | 各專案源檔 |
+| 合成物 | 源檔 | 上傳時機 |
+|---|---|---|
+| `IP.md` | `docs/a-guide/I-00-identity.md` | 每次 |
+| `AP.md` | `docs/a-guide/A-00-guide.md` | 每次 |
+| `RP.md` | `docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md` | 每次 |
+| `UP.md` | `docs/u-profile/U-00-profile.md` | 每次 |
+| `WP.md` | `docs/skills/W/W-00~W-05` | 領域為 W 時 |
+| `SP.md` | `docs/records/SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md` | 體系對話時 |
+| 9*-Map／9*-P／9*-All-code | 各專案源檔 | 進入專案時 |
+| `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
+| `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
+
+**RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning`（詞彙先定義，契約後引用）。
 
 ### 1.2 認知宣告
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
+- 合成物檔名格式：`{字母}P.md`（`IP`／`AP`／`RP`／`UP`／`WP`／`SP`），P 代表 Pack。
+- 9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
 
 ### 1.3 引用規則
 
@@ -55,7 +62,7 @@ Writer: ai-system-20261021-003#37
 **D2 缺包演算法（enterSystem）**
 
 > enterSystem(uploaded):
->   ORDER = [I00, A00, R00, U00]
+>   ORDER = [IP, AP, RP, UP]
 >   for name in ORDER:
 >       if name ∉ uploaded:
 >           索取單一缺失檔 name；停留 NATIVE；return
@@ -345,6 +352,6 @@ Writer: ai-system-20261021-003#37
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792560000
-W: ai-system-20261021-003#37
+V: 1792563000
+W: ai-system-20261021-003#46
 ═══ */
