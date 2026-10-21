@@ -1,10 +1,9 @@
-# W-05 Web App 頁面 Schema（Web App 通用）
+# W-05 Web App 頁面 Schema 與 UI 規範（Web App 通用）
 
-最後更新：B34-3
-Version: 1791899740
-Batch: B34-3
-Writer: A20261013-004#065
-用途：Page Schema 通用規範
+最後更新：2026-10-21
+Version: 1792581006
+Writer: ai-system-20261021-004#6
+用途：Page Schema 通用規範 + UI 結構與術語
 
 ---
 
@@ -93,18 +92,68 @@ Writer: A20261013-004#065
 
 ---
 
-## 九、關聯檔案
+## 九、UI 結構與術語（通用）
+
+### 9.1 頁面結構層級
+| 層級 | 術語 | 說明 | 範例 |
+|---|---|---|---|
+| L1 | Page（頁面） | 一個 .html | index.html |
+| L2 | Section（區塊） | 頁面內垂直堆疊的功能區 | page-header / stats |
+| L3 | Row（列） | Section 內水平排列 | toolbar row |
+| L4 | Item（元素） | 最小單位 | button / select |
+
+### 9.2 Section 類型
+| 術語 | 中文 | 用途 | 標準位置 |
+|---|---|---|---|
+| page-banner | 提示橫幅 | 說明文字 | 頁面最上 |
+| page-header | 頁首 | 標題 + 副標題 + 主要操作 | banner 之後 |
+| page-header-actions | 頁首操作區 | 標題行右側 | page-header 內 |
+| stats | 統計卡區 | 數字統計 | header 之後 |
+| page-controls | 控制列 | 篩選 / 切換 / 年月 | stats 之後 |
+| content | 內容區 | 表格 / 卡片 | 最底 |
+| empty-state | 空狀態 | 無資料時顯示 | 內容區內 |
+
+### 9.3 控制列元素
+| 術語 | type | 用途 | 位置 |
+|---|---|---|---|
+| add | add | 新增按鈕 | toolbar 左 |
+| export | export | 匯出按鈕 | page-header 右 / toolbar 右 |
+| viewToggle | viewToggle | 卡片 / 表格切換 | 強制 body |
+| viewSwitcher | viewSwitcher | 檢視切換 | body 全行 |
+| sort | sort | 排序下拉 | 強制 body |
+| year | year | 年份下拉 | body 左側 |
+| month | month | 月份下拉 | body 左側 |
+| filter | filter | 篩選器 | body 全行 |
+| custom | custom | 自訂按鈕 | 依需求 |
+
+### 9.4 頁面標準佈局
+| 順序 | Section | 內容 |
+|---|---|---|
+| 1 | page-banner | banner（若有） |
+| 2 | page-header | 標題 + 副標題 + 主要操作 |
+| 3 | stats | 統計卡 |
+| 4 | page-controls | 新增 / 切換 / 年月 / 篩選 |
+| 5 | content | 表格 / 卡片 |
+
+### 9.5 表頭互動
+- 點欄位標題（首次）：升序。
+- 點欄位標題（第二次）：降序。
+- 點欄位標題（第三次）：清除排序。
+- 點欄位旁的 🔽：開下拉面板進行篩選。
+
+---
+
+## 十、關聯檔案
 
 | 主題 | 檔案 |
 |---|---|
 | ES Module 架構 | W-03-esmodule.md |
-| 本專案 Schema 實作 | js/pages/*.js |
+| 本專案頁面實作 | 詳見專案包（如 P-06 / P-07） |
 
 ---
 
 /* ═══ EOF ═══
-F: docs/W-05-schema.md
-V: 1791899740
-B(歷史): B34-3
-W: A20261013-004#065
+F: W-05-schema.md
+V: 1792581006
+W: ai-system-20261021-004#6
 ═══ */
