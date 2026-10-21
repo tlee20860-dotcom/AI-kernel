@@ -1,9 +1,8 @@
 # W-04 PWA + Service Worker 規則（Web App 通用）
 
-最後更新：B34-3
-Version: 1791899680
-Batch: B34-3
-Writer: A20261013-004#065
+最後更新：2026-10-21
+Version: 1792581005
+Writer: ai-system-20261021-004#5
 用途：PWA + SW 通用規則
 
 ---
@@ -16,7 +15,7 @@ Writer: A20261013-004#065
 | cache-first | 正式階段（保速度） |
 | stale-while-revalidate | 折衷 |
 
-**本專案選擇**：network-first（ADR-011）。
+**選擇建議**：依專案需求決定，通常開發期使用 network-first，正式期可切換為 cache-first。
 
 ---
 
@@ -54,14 +53,13 @@ Writer: A20261013-004#065
 
 | 主題 | 檔案 |
 |---|---|
-| 本專案 SW | sw.js / manifest.json |
-| 事故日誌 | P-10-incident.md |
+| 本專案 SW 實作 | 詳見專案包（如 sw.js / manifest.json） |
+| 事故日誌 | 詳見專案包（如 P-10-incident.md） |
 
 ---
 
 /* ═══ EOF ═══
-F: docs/W-04-pwa.md
-V: 1791899680
-B(歷史): B34-3
-W: A20261013-004#065
+F: W-04-pwa.md
+V: 1792581005
+W: ai-system-20261021-004#5
 ═══ */
