@@ -298,7 +298,7 @@ Writer: ai-system-20261021-003#46
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 使用 Patch 模式 | OLD 字串唯一出現；單區塊內容 ≤3 行（EOF 替換區塊豁免）；不含空行；含 Emoji 或特殊符號確保唯一 | OLD 唯一且符合行數 | OLD 多次出現；區塊含空行 | 核對 OLD 唯一性 |
+| MUST | 使用 Patch 模式 | OLD 字串唯一出現；單區塊內容 ≤3 行（EOF 替換區塊豁免）；不含空行；含 Emoji 或特殊符號確保唯一；**每個被 Patch 的檔案必須附 EOF 替換區塊，更新 V 與 W** | OLD 唯一且符合行數；檔尾 Version 已更新 | OLD 多次出現；區塊含空行；Patch 後 Version 未變 | 核對 OLD 唯一性與 EOF Version |
 
 <a id="f-008"></a>
 ### F-008 結構完整性
