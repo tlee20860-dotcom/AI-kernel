@@ -1,8 +1,8 @@
 # A-00 啟動引導與核心原則
 
 最後更新：ai-system-20261021-006
-Version: 1792600024
-Writer: ai-system-20261021-006#3
+Version: 1792600029
+Writer: ai-system-20261021-006#8
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）。
 
 ---
@@ -22,7 +22,7 @@ Writer: ai-system-20261021-006#3
 |---|---|---|
 | `IP.md` | `AI-kernel/docs/a-guide/I-00-identity.md` | 每次 |
 | `AP.md` | `AI-kernel/docs/a-guide/A-00-guide.md` | 每次 |
-| `RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md` | 每次 |
+| `RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
 | `UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
 | `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 領域為 W 時 |
 | `SP.md` | `AI-General/docs/records/SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md` | 體系對話時 |
@@ -30,7 +30,7 @@ Writer: ai-system-20261021-006#3
 | `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
 
-**RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning`。
+**RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning` → `R-05-dsl-map`。
 
 ### 1.2 認知宣告
 
@@ -90,8 +90,8 @@ boot_check:
 ```yaml
 pre_condition_guard:
   rule: "IF records_pending NOT EMPTY THEN BLOCK(E_START_DELIVERY) AND FORCE_STATE(CHECK)"
-  pending_source: "SP 四檔任一檔頭 'records_pending' 欄位"
-  resolved_when: "四檔皆補寫完成且 STATE_SEAL 的 records_pending == []"
+  pending_source: "SYSTEM-HANDOFF.md 檔頭 'records_pending' 欄位"
+  resolved_when: "補寫完成且 STATE_SEAL 的 records_pending == []"
   scope: "只擋交付，不擋討論"
 ```
 
@@ -348,18 +348,19 @@ fastdev_post_check:
 
 - 體系級決策判定（D4）：交付清單含體系源檔路徑（`docs/a-guide`、`docs/r-rules`、`docs/u-profile`、`docs/skills`）∨ 決策內容直接修改 I／A／R／U 之語意。
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
-- 若紀錄更新失敗：STATE_SEAL 加 `records_pending: [檔名]`，仍可終止；不得卡死。
+- 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 體系紀錄更新（四檔）
+### 5.2 體系紀錄更新（四檔，SP 現有四檔）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
-| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、未完成事項、下一步 | 全文（≤80 行） |
-| 2 | `SYSTEM-DECISIONS.md` | 新決策 | APPEND_ONLY |
-| 3 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
-| 4 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
+| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、未完成事項、下一步、`records_pending` | 全文（≤80 行） |
+| 2 | `PROGRESS.md` | 任務完成度 | 全文 |
+| 3 | `SYSTEM-CONCLUSION.md` | 議題、設計結論、決策（含被否決方案與技術債附註） | 全文 |
+| 4 | `STATE-INDEX.md` | 由 `setup-structure.yml` 自動生成 | 自動 |
 
 - 禁止使用「略」字或省略內容。
+- **缺口說明**：原 v1.5 規劃的 DECISIONS／REJECTED／DEBT 三檔未建；被否決方案與技術債暫掛 `SYSTEM-CONCLUSION.md`，若需獨立檔，另案決定。
 
 ### 5.3 STATE-INDEX 提醒
 
@@ -373,15 +374,15 @@ fastdev_post_check:
 status: TERMINATED
 records_pending: []
 ssot:
-  handoff:   AI-General/docs/records/SYSTEM-HANDOFF.md   @ V: {v}
-  decisions: AI-General/docs/records/SYSTEM-DECISIONS.md @ V: {v}
-  rejected:  AI-General/docs/records/SYSTEM-REJECTED.md  @ V: {v}
-  debt:      AI-General/docs/records/SYSTEM-DEBT.md      @ V: {v}
+  handoff:   AI-General/docs/records/SYSTEM-HANDOFF.md      @ V: {v}
+  progress:  AI-General/docs/records/PROGRESS.md            @ V: {v}
+  conclusion: AI-General/docs/records/SYSTEM-CONCLUSION.md  @ V: {v}
+  index:     AI-General/docs/records/STATE-INDEX.md         @ V: {v}
 delta_summary:
   files_affected:      [{path}]
   decisions_added:     { range: [D-xxx, D-yyy], count: N }
-  rejected_options:    [{topic: why}]
-  tech_debts:          [K-xx]
+  rejected_options:    [{topic: why}]        # 暫掛 SYSTEM-CONCLUSION.md
+  tech_debts:          [K-xx]                # 暫掛 SYSTEM-CONCLUSION.md
   open_issues:         [{id: summary}]
   unrecorded_projects: [{code: status}]
 next_pointer:
@@ -459,11 +460,11 @@ next_pointer:
 
 - 每項新決策，於該回覆正文末尾（錨點正上方）獨立輸出一行：
   `D-{序號}｜{決策}｜{原因}`
-- 編號接續 `SYSTEM-DECISIONS.md` 現有最大編號＋1，跨對話累加。
-- 若未載入 `SYSTEM-DECISIONS.md`，輸出 `D-?｜{決策}｜{原因}` 並於 STATE_SEAL 備註「編號待補正」。
+- 編號接續 `SYSTEM-CONCLUSION.md` 現有最大編號＋1，跨對話累加。
+- 若未載入 `SYSTEM-CONCLUSION.md`，輸出 `D-?｜{決策}｜{原因}` 並於 STATE_SEAL 備註「編號待補正」。
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792600024
-W: ai-system-20261021-006#3
+V: 1792600029
+W: ai-system-20261021-006#8
 ═══ */
