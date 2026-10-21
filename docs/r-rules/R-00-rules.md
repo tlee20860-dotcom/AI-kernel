@@ -295,7 +295,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 使用 Patch 模式 | OLD 字串唯一出現；單區塊內容 ≤3 行（EOF 替換區塊豁免）；不含空行；含 Emoji 或特殊符號確保唯一；**每個被 Patch 的檔案必須附 EOF 替換區塊，更新 V 與 W**；**同一檔案僅允許一個 `## FILE:` 區塊，多處修改以多個 OLD/NEW 對錶示** | OLD 唯一且符合行數；檔尾 Version 已更新；同檔單一 FILE 區塊 | OLD 多次出現；區塊含空行；Patch 後 Version 未變；同檔多個 FILE 區塊 | 核對 OLD 唯一性、EOF Version 與 FILE 區塊數 |
+| MUST | 使用 Patch 模式 | OLD 字串唯一出現；單區塊內容 ≤3 行（EOF 替換區塊豁免）；不含空行；含 Emoji 或特殊符號確保唯一；**每個被 Patch 的檔案必須附 EOF 替換區塊，更新 V 與 W**；**同一檔案僅允許一個 `## FILE:` 區塊，多處修改以多個 OLD/NEW 對錶示**；**MUST 支援 OLD（唯一匹配）、REGEX（正則替換）、REPLACE_ALL（全局替換）三種模式** | OLD 唯一且符合行數；檔尾 Version 已更新；同檔單一 FILE 區塊；語法符合 `apply_patch.py` 規範 | OLD 多次出現；區塊含空行；Patch 後 Version 未變；同檔多個 FILE 區塊；使用了未定義的 Patch 語法 | 核對 OLD 唯一性、EOF Version 與 FILE 區塊數 |
 
 <a id="f-008"></a>
 ### F-008 結構完整性
@@ -335,6 +335,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-00-rules.md
-V: 1792575600
-W: ai-system-20261021-003#61
+V: 1792582000
+W: ai-system-20261021-004#30
 ═══ */
