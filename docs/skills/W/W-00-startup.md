@@ -1,9 +1,8 @@
 # W-00 領域啟動卡（Web App）
 
-最後更新：B34-4
-Version: 1791903760
-Batch: B34-4
-Writer: A20261013-004#169
+最後更新：2026-10-21
+Version: 1792581001
+Writer: ai-system-20261021-004#1
 用途：Web App 領域的啟動卡（工具鏈 / 慣例 / 載入方式）
 
 ---
@@ -15,7 +14,7 @@ Writer: A20261013-004#169
 | 領域名稱 | Web App |
 | 領域前綴 | W |
 | 適用範圍 | 純 HTML / CSS / JS 前端 + Serverless 後端 |
-| 本領域代表專案 | 家庭 webapp（v2.Family） |
+| 適用專案 | 所有依循本體系之 Web App 專案 |
 
 ---
 
@@ -28,7 +27,9 @@ Writer: A20261013-004#169
 | 2 | W-02-functions.md | Cloudflare Pages Functions 規則 |
 | 3 | W-03-esmodule.md | 純前端 ES Module 架構 |
 | 4 | W-04-pwa.md | PWA + Service Worker |
-| 5 | W-05-schema.md | Web App 頁面 Schema |
+| 5 | W-05-schema.md | Web App 頁面 Schema 與 UI 規範 |
+| 6 | W-06-sop.md | Web App 通用任務 SOP |
+| 7 | W-07-errors.md | Web App 通用錯誤與防呆 |
 
 ---
 
@@ -62,7 +63,7 @@ Writer: A20261013-004#169
 
 | 任務 | 引用 |
 |---|---|
-| 新增頁面 | W-03 + W-05 |
+| 新增頁面 | W-03 + W-05 + W-06 |
 | 改資料結構 | W-01 |
 | 改 Functions | W-02 |
 | 改 PWA | W-04 |
@@ -84,7 +85,7 @@ Writer: A20261013-004#169
 
 ## 七、未來擴充提示
 
-若需要新增 Web App 技術（如 WebSocket / Web Worker），新增 `W-06-xxx.md`。
+若需要新增 Web App 技術（如 WebSocket / Web Worker），新增 `W-08-xxx.md` 並更新本清單。
 
 ---
 
@@ -92,18 +93,19 @@ Writer: A20261013-004#169
 
 | 主題 | 檔案 |
 |---|---|
+| 體系四檔 | `IP.md`、`AP.md`、`RP.md`、`UP.md` |
 | Firebase RTDB | W-01-firebase.md |
 | CF Pages Functions | W-02-functions.md |
 | ES Module | W-03-esmodule.md |
 | PWA + SW | W-04-pwa.md |
 | Page Schema | W-05-schema.md |
-| 通用大腦 | C-00-startup.md ~ C-10-handoff-mechanism.md |
+| 通用 SOP | W-06-sop.md |
+| 通用錯誤 | W-07-errors.md |
 
 ---
 
 /* ═══ EOF ═══
 F: W-00-startup.md
-V: 1791903760
-B(歷史): B34-4
-W: A20261013-004#169
+V: 1792581001
+W: ai-system-20261021-004#1
 ═══ */
