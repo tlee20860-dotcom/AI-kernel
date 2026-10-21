@@ -1,8 +1,8 @@
 # A-00 啟動引導與核心原則
 
-最後更新：ai-system-20261021-005
-Version: 1792589004
-Writer: ai-system-20261021-005#4
+最後更新：ai-system-20261021-006
+Version: 1792600024
+Writer: ai-system-20261021-006#3
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）。
 
 ---
@@ -30,14 +30,13 @@ Writer: ai-system-20261021-005#4
 | `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
 
-**RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning`（詞彙先定義，契約後引用）。
+**RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning`。
 
 ### 1.2 認知宣告
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
-- 合成物檔名格式：`{字母}P.md`（`IP`／`AP`／`RP`／`UP`／`WP`／`SP`），P 代表 Pack。
-- 9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
+- 合成物檔名格式：`{字母}P.md`；9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
 
 ### 1.3 引用規則
 
@@ -59,6 +58,43 @@ Writer: ai-system-20261021-005#4
 
 - `STATE_NATIVE` 為體系外環境，不屬 $S$、不屬 δ。
 
+**求值順序（四步，不得交錯）**
+
+> 1. `boot_check`（版本比對，不符則警告）
+> 2. `pre_condition_guard`（pending 攔截）
+> 3. `transitions`（頂到底短路）
+> 4. `fallback_handler`（全失敗才觸發）
+
+**boot_check（開場版本比對）**
+
+```yaml
+boot_check:
+  trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
+  check:
+    - "讀 SP 之 STATE-INDEX 檔案清單的 Version 欄"
+    - "比對實際上傳四檔 EOF 的 V 欄"
+  if_mismatch:
+    action: "輸出 ⚠️ 上次對話疑似未結案"
+    detail: "{檔名}：SP 記 {v1} vs 實檔 {v2}"
+    options:
+      A: "先補上次結案（我列缺漏項）"
+      B: "忽略，直接開新任務（風險自負）"
+      C: "先看上次改了什麼"
+  if_match:
+    action: "正常進入 DISCUSS"
+  limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
+```
+
+**pre_condition_guard（pending 攔截）**
+
+```yaml
+pre_condition_guard:
+  rule: "IF records_pending NOT EMPTY THEN BLOCK(E_START_DELIVERY) AND FORCE_STATE(CHECK)"
+  pending_source: "SP 四檔任一檔頭 'records_pending' 欄位"
+  resolved_when: "四檔皆補寫完成且 STATE_SEAL 的 records_pending == []"
+  scope: "只擋交付，不擋討論"
+```
+
 **D2 缺包演算法（enterSystem）**
 
 > enterSystem(uploaded, inputText):
@@ -73,7 +109,6 @@ Writer: ai-system-20261021-005#4
 >       target_domain = normalize_domain(raw_label)
 >       trigger E_SWITCH_DOMAIN(target_domain, is_startup=True)
 >   else:
->       # 自動識別專案包
 >       if "90-AI-WEB-APP-Family" in uploaded:
 >           trigger E_SWITCH_DOMAIN("Web", is_startup=True)
 >       elif "91-AI-OS" in uploaded:
@@ -91,7 +126,7 @@ Writer: ai-system-20261021-005#4
 | `STATE_DISCUSS` | 聽需求、提方案；禁輸出檔案內容 |
 | `STATE_DELIVER` | 列交付清單、輸出檔案 |
 | `STATE_WAIT_CONFIRM` | 交付後等待 A/B/C/D 回覆 |
-| `STATE_CHECK` | 依 K-001／K-002 驗證 |
+| `STATE_CHECK` | 依 K-001／K-002 驗證；pending 補寫亦在此態 |
 | `STATE_TERMINATED` | 交接完成，FSM 終止 |
 
 ### 2.3 事件集 $E$
@@ -119,22 +154,33 @@ Writer: ai-system-20261021-005#4
 >   if 輸入含「審查/檢查/診斷」 → 審查者（強制）
 >   else → 維持原 role
 
-### 2.5 轉移矩陣 $\delta$（From | Event | Guard | To）
+### 2.5 轉移矩陣 $\delta$（YAML 全量＋fallback_handler）
 
-| From | Event | Guard | To |
-|---|---|---|---|
-| DISCUSS | E_START_DELIVERY | role=執行者 | DELIVER |
-| DISCUSS | E_CHECK | role=執行者 | CHECK |
-| DISCUSS | E_HANDOFF | 交接詞完整 | TERMINATED |
-| DISCUSS | E_EXIT_SYSTEM | — | （離開 FSM → NATIVE） |
-| DISCUSS | E_SWITCH_DOMAIN | G1∧G2∧G3 ∨ is_startup=True | DISCUSS |
-| DELIVER | E_CONFIRM_LIST | 清單已確認 | WAIT_CONFIRM |
-| WAIT_CONFIRM | 使用者回 A/B/C/D 或語意映射 | 依 §2.9 | DISCUSS |
-| CHECK | 檢查完成 | — | DISCUSS |
-| 任意 | E_CI_FAIL | 使用者明確回報 | DISCUSS |
-| 任意 | E_HOT_UPDATE | Version 較新 | 原態 |
-| 任意 | E_STALE_PACKAGE | Version 較舊 | 原態 |
-| 任意 | 未列事件 | — | 原態＋⚠️ 警告（D5） |
+```yaml
+fsm:
+  state_set: [DISCUSS, DELIVER, WAIT_CONFIRM, CHECK, TERMINATED]
+  evaluation_order: strict_top_down
+  transitions:
+    # 優先級 1：明確意圖（置頂）
+    - { id: T07,  from: WAIT_CONFIRM, event: E_USER_MAPPING,  guard: "intent_unlock_resolved",  to: DISCUSS }
+    - { id: T07b, from: WAIT_CONFIRM, event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
+    - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
+    # 優先級 2：常規
+    - { id: T01, from: DISCUSS, event: E_START_DELIVERY, guard: "role == Builder", to: DELIVER }
+    - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Builder", to: CHECK }
+    - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: WAIT_CONFIRM }
+    - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
+    - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
+    - { id: T05, from: DISCUSS, event: E_SWITCH_DOMAIN,  guard: "G1 && G2 && G3 || is_startup", to: DISCUSS }
+    # 優先級 3：萬用（仍屬 transitions）
+    - { id: T09, from: ANY, event: E_CI_FAIL,       guard: "user_reported_failure", to: DISCUSS }
+    - { id: T10, from: ANY, event: E_HOT_UPDATE,    guard: "incoming.version > current.version",  to: SAME }
+    - { id: T11, from: ANY, event: E_STALE_PACKAGE, guard: "incoming.version <= current.version", to: SAME }
+  fallback_handler:
+    condition: "ALL_TRANSITIONS_FAILED"
+    action: WARN_UNEXPECTED_EVENT
+    to: SAME
+```
 
 ### 2.6 不變式（Invariants）
 
@@ -173,12 +219,10 @@ Writer: ai-system-20261021-005#4
 >       索取單一缺失檔；return
 >
 >   if is_startup == True:
->       # 啟動豁免：跳過 G1/G2/G3 權限攔截，直接套用沙盒
 >       freeze(old_fork.context); unload(old_fork.pack); load(new_fork.pack)
 >       apply_ccl_sandbox(target_domain)
 >       output "[系統] 已載入 {display_name} 沙盒模式。" → 續 DISCUSS
 >   else:
->       # 對話中途觸發：實施嚴格檢查
 >       if G1 ∧ G2 ∧ G3:
 >           freeze(old_fork.context); unload(old_fork.pack); load(new_fork.pack)
 >           apply_ccl_sandbox(target_domain)
@@ -188,12 +232,14 @@ Writer: ai-system-20261021-005#4
 
 ### 2.9 意圖解鎖（WAIT_CONFIRM）
 
-| 優先級 | 規則 |
-|---|---|
-| 1 | 意圖解鎖與新任務解析**物理優先於** D5 Fallback |
-| 2 | 語意映射：A 已更新／B 未更新／C 需修改／D 先解決其他 |
-| 3 | 負面優先：C 異常 > B 未動 > D 轉向 > A 肯定 |
-| 4 | 提問／新任務優先：先解答或切回 DISCUSS，末尾附選項 |
+```yaml
+intent_unlock:
+  priority:
+    - P1: "T07／T07b 物理優先於 fallback_handler"
+    - P2: "語意映射 A已更新／B未更新／C需修改／D先解決其他"
+    - P3: "負面優先：C > B > D > A"
+    - P4: "提問／新任務優先（T07b），末尾附選項"
+```
 
 ### 2.10 啟動身份宣告機制
 
@@ -208,27 +254,34 @@ Writer: ai-system-20261021-005#4
 
 ### 2.11 元系統動態沙盒與動態能力控制規格（CCL）
 
-#### 2.11.1 兩層式架構與能力矩陣
+```yaml
+ccl_matrix:
+  MetaSandbox:  { trigger: "[身份: 體系] || [身份: Meta]", write_system_files: ALLOW, r001_policy: STRICT }
+  FastDev:      { trigger: "[身份: W] || [身份: Webapp]",  write_system_files: DENY,  r001_policy: RELAXED }
+  StrictReview: { trigger: DEFAULT,                          write_system_files: DENY,  r001_policy: STRICT }
 
-| 沙盒類型 | 觸發標籤 | 體系源檔寫入權 | R-001 防呆策略 | 核心信仰與格式約束 |
-|---|---|---|---|---|
-| **Meta Sandbox** | `[身份: 體系]` / `[身份: Meta]` | 允許 | 保留（須先提案） | 嚴守 F-01~F-03、R-014、F-005 |
-| **Fast Dev** | `[身份: W]` / `[身份: Webapp]` | 阻斷 | 放寬（允許直接出代碼） | 強制恪守 F-001、F-003、F-005、F-008 |
-| **Strict Review** | 無標籤（預設） | 阻斷 | 強制執行 | 全面稽核與對抗審查 |
+fastdev_post_check:
+  rule: "IF sandbox == FastDev AND output_contains_code THEN REQUIRE_PROOF"
+  primary:
+    method: ACTIONS_VALIDATION
+    target: "物理匹配 '/* ═══ EOF ═══ */' 與 F-001 首行"
+    executor: "GitHub Actions 腳本"
+  fallback:
+    method: EXTRACTION_PROOF
+    required:
+      - "extract_1：F-001 標頭第一行原文"
+      - "extract_2：代碼塊最後一行原文（須物理等於 EOF 標籤）"
+      - "extract_3：章節數 {original} vs {delivered}"
+    verification: "AI 自檢摘要，Ken 可抽查"
+  on_failure: "視為廢碼，強制重交"
+```
 
-#### 2.11.2 Fast Dev 模式代碼交付鐵律
-1. **R-001 放寬範疇**：僅免除「預先貼出文字方案摘要並等待 confirm」之流程，允許在討論期直接提供完整實作代碼。
-2. **結構完整性不可讓步**：任何產出之代碼檔，MUST 嚴格包含：
-   - F-001 完整對話標頭。
-   - F-003 三反引號語法包裹。
-   - F-005 EOF 結尾宣告（`/* ═══ EOF ═══ */`）。
-   - F-008 章節/模組完整性。
-3. **討論期非正式標記**：若於 DISCUSS 階段輸出供試驗之代碼，MUST 於代碼區塊上方標註 `[非正式交付]`（依 R03 詞 27）。
+**Fast Dev 模式代碼交付鐵律**：
+1. **R-001 放寬範疇**：僅免除「預先貼出文字方案摘要並等待 confirm」之流程。
+2. **結構完整性不可讓步**：F-001 完整標頭、F-003 三反引號包裹、F-005 EOF、F-008 章節/模組完整性。
+3. **討論期非正式標記**：DISCUSS 階段輸出供試驗代碼，MUST 標註 `[非正式交付]`。
 
-#### 2.11.3 異常標籤與 Fallback 處置
-若傳入無法識別之領域標籤，系統處置如下：
-1. 降級退回 `Strict Review Sandbox`。
-2. R-014 回覆標頭第 5 行輸出：`執行：⚠️ 未知領域標籤，已載入標準安全沙盒。`
+**異常標籤 Fallback**：未知領域標籤 → 降級 `Strict Review Sandbox`，R-014 第五行輸出警示。
 
 ---
 
@@ -281,28 +334,30 @@ Writer: ai-system-20261021-005#4
 
 ## 五、結束對話與交接 SOP
 
-### 5.1 觸發與 Guard（含 D4、短路）
+### 5.1 觸發與 Guard（含 D4、短路、pending）
 
 > on E_HANDOFF（「結束對話」／「準備轉移」）：
 >   affected = deriveAffected(交付清單)          # 見 §5.6
 >   if affected == ∅：
->       僅產出 §5.4 交接詞 → §5.7 重置 → 結束
+>       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
 >   else：
 >       §5.2 體系紀錄更新（若含 SYSTEM）
 >       §5.5／§5.6 專案紀錄更新（若含 PROJECT）
->       §5.4 交接詞
+>       §5.4 STATE_SEAL
 >       §5.7 重置 → 結束
 
-- 體系級決策判定（D4）：交付清單含體系源檔路徑（`docs/a-guide`、`docs/r-rules`、`docs/u-profile`、`docs/skills`）∨ 決策內容直接修改 I／A／R／U 之語意。口頭決策不算。
-- 執行順序（N4）：**先紀錄更新 → 再交接詞 → 最後重置**。
+- 體系級決策判定（D4）：交付清單含體系源檔路徑（`docs/a-guide`、`docs/r-rules`、`docs/u-profile`、`docs/skills`）∨ 決策內容直接修改 I／A／R／U 之語意。
+- 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
+- 若紀錄更新失敗：STATE_SEAL 加 `records_pending: [檔名]`，仍可終止；不得卡死。
 
-### 5.2 體系紀錄更新（三檔）
+### 5.2 體系紀錄更新（四檔）
 
-| # | 檔案 | 更新內容 |
-|---|---|---|
-| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、未完成事項、下一步 |
-| 2 | `PROGRESS.md` | 任務完成度 |
-| 3 | `SYSTEM-CONCLUSION.md` | 新決策、新議題編號 |
+| # | 檔案 | 更新內容 | 模式 |
+|---|---|---|---|
+| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、未完成事項、下一步 | 全文（≤80 行） |
+| 2 | `SYSTEM-DECISIONS.md` | 新決策 | APPEND_ONLY |
+| 3 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
+| 4 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
 
 - 禁止使用「略」字或省略內容。
 
@@ -311,29 +366,29 @@ Writer: ai-system-20261021-005#4
 - `STATE-INDEX.md` 由 `setup-structure.yml` 自動生成，AI 不手動修改。
 - 交接時提醒：「請確認 `AI-infra` 最新 Action 是否成功跑完。」
 
-### 5.4 交接詞模板
+### 5.4 STATE_SEAL 模板（取代長篇交接詞）
 
-> 【交接詞】對話編號：{專案代碼}-{YYYYMMDD}-{序號3位}
->
-> ## 一、不變式
-> - 同包重傳取 Version 大者。
-> - 衝突依 I00 §四 權限階梯。
-> - 未經「確認清單」不得交付。
->
-> ## 二、約束
-> - 缺包僅索取單一缺失檔。
-> - 嚴格遵守 R-001、R-009、R-012。
-> - 禁止「略」字省略。
-> - 禁止估算或顯示 Token。
-> - 交付禁用 ✅，須貼事實證據與行數對比。
->
-> ## 三、決策台帳（D-編號｜決策｜原因）
->
-> ## 四、被否決方案及原因
->
-> ## 五、開放問題（含「未建立紀錄之專案」欄）
->
-> ## 六、下一步
+```yaml
+# === STATE_SEAL: {dialog_id} ===
+status: TERMINATED
+records_pending: []
+ssot:
+  handoff:   AI-General/docs/records/SYSTEM-HANDOFF.md   @ V: {v}
+  decisions: AI-General/docs/records/SYSTEM-DECISIONS.md @ V: {v}
+  rejected:  AI-General/docs/records/SYSTEM-REJECTED.md  @ V: {v}
+  debt:      AI-General/docs/records/SYSTEM-DEBT.md      @ V: {v}
+delta_summary:
+  files_affected:      [{path}]
+  decisions_added:     { range: [D-xxx, D-yyy], count: N }
+  rejected_options:    [{topic: why}]
+  tech_debts:          [K-xx]
+  open_issues:         [{id: summary}]
+  unrecorded_projects: [{code: status}]
+next_pointer:
+  required_pack: SP.md
+  startup_command: "[身份: {domain}]"
+# ==============================
+```
 
 ### 5.5 專案結束 SOP 缺失偵測（R-017）
 
@@ -361,7 +416,7 @@ Writer: ai-system-20261021-005#4
 | 混合狀態 | 逐專案判定：有紀錄節→更新；無→標 MISSING |
 | 提問 | 缺者合併一次提問，僅列缺者 |
 | 不阻擋 | 缺紀錄不阻擋整體結束 |
-| 不補 | 選「不補」時，交接詞 §五 註記「未建立紀錄之專案」 |
+| 不補 | 選「不補」時，STATE_SEAL §open_issues 註記 |
 | 代記 | 提供「沿用體系紀錄代記」選項，須標明代記 |
 
 ### 5.7 退出重置（D6）
@@ -396,7 +451,7 @@ Writer: ai-system-20261021-005#4
 - 事件：`E_TRANSFER_MODE`。
 - Guard：無審查意圖（含「審查／檢查／診斷」⇒ 維持審查者）。
 - 動作：Role→執行者；輸出單一 Code Block；Code Block 正上方獨立標註 `[轉交模式 - 非正式交付]`。
-- 輸出結構四要件：頂部隔離（R-014 前五行置外部）／標籤聲明／單一收納／語法與邊界防呆（詳見 R03 詞 27、31、32）。
+- 輸出結構四要件：頂部隔離／標籤聲明／單一收納／語法與邊界防呆。
 
 ---
 
@@ -404,13 +459,11 @@ Writer: ai-system-20261021-005#4
 
 - 每項新決策，於該回覆正文末尾（錨點正上方）獨立輸出一行：
   `D-{序號}｜{決策}｜{原因}`
-- 編號接續 `SYSTEM-CONCLUSION.md` 現有最大編號＋1，跨對話累加。
-- 若未載入 `SYSTEM-CONCLUSION.md`，輸出 `D-?｜{決策}｜{原因}` 並於交接詞備註「編號待補正」。
-
----
+- 編號接續 `SYSTEM-DECISIONS.md` 現有最大編號＋1，跨對話累加。
+- 若未載入 `SYSTEM-DECISIONS.md`，輸出 `D-?｜{決策}｜{原因}` 並於 STATE_SEAL 備註「編號待補正」。
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792589004
-W: ai-system-20261021-005#4
+V: 1792600024
+W: ai-system-20261021-006#3
 ═══ */
