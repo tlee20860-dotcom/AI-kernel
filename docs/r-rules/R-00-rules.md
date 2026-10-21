@@ -1,11 +1,5 @@
 # R-00 規則包
 
->>>>>>> NEW
-
-<<<<<<< OLD
-| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者） | 檔尾含三行 EOF | 無 EOF | 檢查檔尾 |
-=======
-| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者）；內文不得重複 Version 或 Writer | 檔尾含三行 EOF，且內文無 Version／Writer | 無 EOF；內文重複 Version | 檢查檔尾與內文 |
 用途：行為鐵律 R、事前提問 S、事後檢查 K、格式規範 F、禁止事項、專案邊界。
 
 ---
@@ -287,7 +281,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者） | 檔尾含三行 EOF | 無 EOF | 檢查檔尾 |
+| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者）；內文不得重複 Version 或 Writer | 檔尾含三行 EOF，且內文無 Version／Writer | 無 EOF；內文重複 Version | 檢查檔尾與內文 |
 
 <a id="f-006"></a>
 ### F-006 狀態總表（位置限制）
@@ -301,14 +295,14 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 使用 Patch 模式 | OLD 字串唯一出現；單區塊內容 ≤3 行（EOF 替換區塊豁免）；不含空行；含 Emoji 或特殊符號確保唯一；**每個被 Patch 的檔案必須附 EOF 替換區塊，更新 V 與 W** | OLD 唯一且符合行數；檔尾 Version 已更新 | OLD 多次出現；區塊含空行；Patch 後 Version 未變 | 核對 OLD 唯一性與 EOF Version |
+| MUST | 使用 Patch 模式 | OLD 字串唯一出現；單區塊內容 ≤3 行（EOF 替換區塊豁免）；不含空行；含 Emoji 或特殊符號確保唯一；**每個被 Patch 的檔案必須附 EOF 替換區塊，更新 V 與 W**；**同一檔案僅允許一個 `## FILE:` 區塊，多處修改以多個 OLD/NEW 對錶示** | OLD 唯一且符合行數；檔尾 Version 已更新；同檔單一 FILE 區塊 | OLD 多次出現；區塊含空行；Patch 後 Version 未變；同檔多個 FILE 區塊 | 核對 OLD 唯一性、EOF Version 與 FILE 區塊數 |
 
 <a id="f-008"></a>
 ### F-008 結構完整性
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 交付完整檔 | 盤點原檔 § 章節，新檔章節數一致；貼「原檔行數」與「交付行數」對比（差異 ≤10 行）。若含重構刪除／契約化擴充，於 F-001 標頭註明原因，行數限制豁免。 | 含章節對照與行數對比；豁免已註明 | 以 Token 為由刪段落；僅給修改點要求自行覆蓋 | 核對章節與行數 |
+| MUST | 交付完整檔 | 盤點原檔 § 章節，新檔章節數一致；貼「原檔行數」與「交付行數」對比（差異 ≤10 行）。若含重構刪除／契約化擴充／刪除內文 Version，於 F-001 標頭註明原因，行數限制豁免。 | 含章節對照與行數對比；豁免已註明 | 以 Token 為由刪段落；僅給修改點要求自行覆蓋 | 核對章節與行數 |
 
 ---
 
