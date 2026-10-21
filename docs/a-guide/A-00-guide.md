@@ -1,8 +1,8 @@
 # A-00 啟動引導與核心原則
 
 最後更新：ai-system-20261021-003
-Version: 1792563000
-Writer: ai-system-20261021-003#46
+Version: 1792569000
+Writer: ai-system-20261021-003#51
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄。
 
 ---
@@ -20,12 +20,12 @@ Writer: ai-system-20261021-003#46
 
 | 合成物 | 源檔 | 上傳時機 |
 |---|---|---|
-| `IP.md` | `docs/a-guide/I-00-identity.md` | 每次 |
-| `AP.md` | `docs/a-guide/A-00-guide.md` | 每次 |
-| `RP.md` | `docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md` | 每次 |
-| `UP.md` | `docs/u-profile/U-00-profile.md` | 每次 |
-| `WP.md` | `docs/skills/W/W-00~W-05` | 領域為 W 時 |
-| `SP.md` | `docs/records/SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md` | 體系對話時 |
+| `IP.md` | `AI-kernel/docs/a-guide/I-00-identity.md` | 每次 |
+| `AP.md` | `AI-kernel/docs/a-guide/A-00-guide.md` | 每次 |
+| `RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md` | 每次 |
+| `UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
+| `WP.md` | `AI-kernel/docs/skills/W/W-00~W-05` | 領域為 W 時 |
+| `SP.md` | `AI-General/docs/records/SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md` | 體系對話時 |
 | 9*-Map／9*-P／9*-All-code | 各專案源檔 | 進入專案時 |
 | `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
@@ -352,6 +352,6 @@ Writer: ai-system-20261021-003#46
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792563000
-W: ai-system-20261021-003#46
+V: 1792569000
+W: ai-system-20261021-003#51
 ═══ */
