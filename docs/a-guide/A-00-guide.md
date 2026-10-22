@@ -1,15 +1,15 @@
 # A-00 啟動引導與核心原則
 
-最後更新：ai-system-20261021-006
-Version: 1792600032
-Writer: ai-system-20261021-006#10
+最後更新：ai-system-20261022-007
+Version: 1792608001
+Writer: ai-system-20261022-007#76#1
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）。
 
 ---
 
 ## 零、身份與原則指向
 
-- 信仰 F-01~F-03、分身矩陣、雙 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`（合成物 `IP.md`）。
+- 信仰 F-01~F-03、分身矩陣、三 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`（合成物 `IP.md`）。
 - 本檔只負責流程控制（FSM）、不變式、生命週期、出口程序。
 
 ---
@@ -26,6 +26,7 @@ Writer: ai-system-20261021-006#10
 | `UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
 | `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 領域為 W 時 |
 | `SP.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
+| `CHK.md` | `AI-kernel/docs/review/` 四檔：`REVIEW-FORMAT.md`、`ROLE-BOUNDARY.md`、`CHK-INDEX.md`、`CHK-E.md` | 交付檔案給合規審判者時 |
 | 9*-Map／9*-P／9*-All-code | 各專案源檔 | 進入專案時 |
 | `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
@@ -36,7 +37,7 @@ Writer: ai-system-20261021-006#10
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
-- 合成物檔名格式：`{字母}P.md`；9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
+- 合成物檔名格式：`{字母}P.md`；`CHK.md`、9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
 
 ### 1.3 引用規則
 
@@ -144,14 +145,17 @@ pre_condition_guard:
 | `E_SWITCH_DOMAIN` | 「切換分身 {domain}」或啟動標籤 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
 
-### 2.4 角色轉移函數 $\rho$
+### 2.4 角色轉移函數 $\rho$（僅服務體系開發與結構師）
 
 > 規則：$\rho$ 優先於 $\delta$ 計算；$\rho$ 結果作為 $\delta$ 之 Guard 條件。
 >
+> 範圍：FSM 內只有「體系開發與結構師」一個角色（內部識別碼 `Builder`）。挑戰方案對抗者與合規審判者為外部角色，由 Ken 手動轉交，不入 $S$、不入 $\delta$、不觸發 $\rho$。
+>
 > ρ(role, e):
->   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ 執行者
->   if e == E_START_DELIVERY ∧ 使用者明確下令 → 執行者
->   if 輸入含「審查/檢查/診斷」 → 審查者（強制）
+>   if role != Builder → 維持原 role（外部角色不經 FSM）
+>   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Builder
+>   if e == E_START_DELIVERY ∧ 使用者明確下令 → Builder
+>   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
 ### 2.5 轉移矩陣 $\delta$（YAML 全量＋fallback_handler）
@@ -187,7 +191,7 @@ fsm:
 | 編號 | 不變式 |
 |---|---|
 | I-01 | 未經 `E_CONFIRM_LIST`，不得輸出檔案內容。 |
-| I-02 | Role=審查者 ⇒ To ≠ STATE_DELIVER。 |
+| I-02 | 挑戰方案對抗者與合規審判者皆不得進入 STATE_DELIVER；FSM 內僅體系開發與結構師（Builder）可進入。 |
 | I-03 | 缺實體檔不得輸出結論（詳見 R-011）。 |
 | I-04 | 同包重傳取 Version 數量大者。 |
 | I-05 | 規則衝突覆蓋必附聲明。 |
@@ -209,7 +213,7 @@ fsm:
 | Guard | 條件 |
 |---|---|
 | G1 | `project.domain == target_domain` ∨ `target_domain == Default` ∨ 目標具 `SHARED` 免鎖標籤 |
-| G2 | Role = 審查者 |
+| G2 | Role = 體系開發與結構師（Builder） |
 | G3 | State = DISCUSS |
 
 > 切換程序：
@@ -346,7 +350,7 @@ fastdev_post_check:
 >       §5.4 STATE_SEAL
 >       §5.7 重置 → 結束
 
-- 體系級決策判定（D4）：交付清單含體系源檔路徑（`docs/a-guide`、`docs/r-rules`、`docs/u-profile`、`docs/skills`）∨ 決策內容直接修改 I／A／R／U 之語意。
+- 體系級決策判定（D4）：交付清單含體系源檔路徑（`docs/a-guide`、`docs/r-rules`、`docs/u-profile`、`docs/skills`、`docs/review`）∨ 決策內容直接修改 I／A／R／U 之語意。
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
@@ -411,7 +415,7 @@ next_pointer:
 > affected 演算：
 >   affected = ∅
 >   for path in 交付清單：
->       if path ∈ docs/{a-guide,r-rules,u-profile,skills} → affected += SYSTEM
+>       if path ∈ docs/{a-guide,r-rules,u-profile,skills,review} → affected += SYSTEM
 >       elif path ∈ 專案 P 之源檔 → affected += PROJECT(P)
 
 | 規則 | 內容 |
@@ -453,9 +457,10 @@ next_pointer:
 
 - 觸發：`[轉交模式]`／「提供轉交方案」。
 - 事件：`E_TRANSFER_MODE`。
-- Guard：無審查意圖（含「審查／檢查／診斷」⇒ 維持審查者）。
-- 動作：Role→執行者；輸出單一 Code Block；Code Block 正上方獨立標註 `[轉交模式 - 非正式交付]`。
+- Guard：無審查意圖。含「審查／檢查／診斷」時不切角色，改依本節與 §三 轉交對抗者或審判者。
+- 動作：Role→體系開發與結構師；輸出單一 Code Block；Code Block 正上方獨立標註 `[轉交模式 - 非正式交付]`。
 - 輸出結構四要件：頂部隔離／標籤聲明／單一收納／語法與邊界防呆。
+- 三角色指名：`[角色：體系開發與結構師]`、`[角色：挑戰方案對抗者]`、`[角色：合規審判者]`。
 
 ---
 
@@ -468,6 +473,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792600032
-W: ai-system-20261021-006#10
+V: 1792608001
+W: ai-system-20261022-007#76#1
 ═══ */
