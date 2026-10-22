@@ -1,3 +1,5 @@
+## 📄 AI-kernel/docs/r-rules/R-05-dsl-map.md
+
 # R-05 規則 DSL 映射表
 
 用途：將 R-00 之 36 條規則映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
@@ -26,6 +28,7 @@
 | R-016 | 鐵律 | DSL | 四大危機分類，可判 |
 | R-017 | 鐵律 | DSL | 專案缺 SOP 三選項，可判 |
 | R-018 | 鐵律 | DSL | affected 多目標更新，可判 |
+| R-019 | 鐵律 | DSL（checklist） | 觸發條件可列舉五項清單；「結構大變」保留語意判斷 |
 | S-001 | 提問 | DSL（checklist） | 檔案數標示 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
@@ -45,7 +48,7 @@
 | F-007 | 格式 | DSL | Patch 廢除，可判 |
 | F-008 | 格式 | DSL | 章節數＋行數，可判；含 APPEND_ONLY |
 
-**統計**：DSL 化 30 條；保留散文 6 條（R-007、R-015、S-007、F-004，另 2 條於下方說明）。
+**統計**：DSL 化 31 條；保留散文 6 條（R-007、R-015、S-007、F-004，另 2 條於下方說明）。
 
 ### 1.1 R-00 §七 審查機制映射（本次新增）
 
@@ -97,6 +100,7 @@ rules_dsl:
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
   R-018: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target)"
+  R-019: "IF delivery_contains_structural_change IN [split_file, add_file, delete_file, new_pattern_or_role, fsm_or_layering_change] THEN REQUIRE(list_structural_changes AND prompt_evolution_record) AND FORBID(auto_write_evolution)"
 
   # ── 事前提問（S）──
   S-001: { rule: "SHALL declare file_count before proposing" }
@@ -169,6 +173,8 @@ rules_dsl:
 
 **另 2 條說明**：R-011 與 F-008 雖已 DSL 化，但含嵌套條件（R-011 的 keyword_list、F-008 的 APPEND_ONLY），屬「部分 DSL」，仍需散文補充邊界案例。
 
+**R-019 說明**：已 DSL 化（checklist），但「結構大變」的語意判斷仍需散文邊界表補充（見 R-00 R-019 邊界表）。
+
 ---
 
 ## 四、維護規則
@@ -192,6 +198,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792609001
-W: ai-system-20261022-007#78#1
+V: 1792663001
+W: ai-system-20261022-008#73
 ═══ */
