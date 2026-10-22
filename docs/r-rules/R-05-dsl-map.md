@@ -1,5 +1,3 @@
-## 📄 AI-kernel/docs/r-rules/R-05-dsl-map.md
-
 # R-05 規則 DSL 映射表
 
 用途：將 R-00 之 36 條規則映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
@@ -29,7 +27,7 @@
 | R-017 | 鐵律 | DSL | 專案缺 SOP 三選項，可判 |
 | R-018 | 鐵律 | DSL | affected 多目標更新，可判 |
 | R-019 | 鐵律 | DSL（checklist） | 觸發條件可列舉五項清單；「結構大變」保留語意判斷 |
-| S-001 | 提問 | DSL（checklist） | 檔案數標示 |
+| S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
 | S-004 | 提問 | DSL（checklist） | 版本引用 |
@@ -50,18 +48,22 @@
 
 **統計**：DSL 化 31 條；保留散文 6 條（R-007、R-015、S-007、F-004，另 2 條於下方說明）。
 
-### 1.1 R-00 §七 審查機制映射（本次新增）
+### 1.1 R-00 其他區塊映射（本次擴充）
 
 | 編號 | 類別 | 映射方式 | 理由 |
 |---|---|---|---|
+| R00-0.5 | 規則 | DSL | 廢除跳號＋EVOLUTION 記錄＋限制掃描範圍要求人類協助，可判 |
 | R00-7.1 | 審查 | 保留散文 | 三 AI 模式與 CHK 合成物屬結構陳述，無單一 predicate |
 | R00-7.2 | 審查 | DSL | 核／不核範圍可列舉 |
 | R00-7.3 | 審查 | DSL | L1~L4 層級可列舉 |
 | R00-7.4 | 審查 | DSL | LV-01~07 可判；LV-03「理由充分」部分保留散文 |
 | R00-7.5 | 審查 | DSL | 升層條件可列舉 |
 | R00-7.6 | 審查 | DSL | RV-01~04 可判 |
+| 四檔豁免 | 規則 | DSL | 目標包 ∈ {IP,AP,RP,UP} → 熱更新，可判 |
+| 混合包阻擋 | 規則 | DSL | input 包含合法與非法檔 → return reject |
+| 歸檔 | 流程 | DSL（checklist） | 門檻可列舉 |
 
-**詞表說明**：詞 34 名稱變更、詞 48~57 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
+**詞表說明**：詞 34 名稱變更、詞 48~57 及 58~64 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
 
 ---
 
@@ -70,7 +72,7 @@
 ```yaml
 rules_dsl:
   # ── 行為鐵律（R）──
-  R-001: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT AND sandbox != FastDev THEN REQUIRE(propose_before_deliver)"
+  R-001: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT AND sandbox != FastDev THEN REQUIRE(propose_before_deliver) AND REQUIRE(S-001_three_columns)"
   R-002: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT THEN FORBID(file_content) AND REQUIRE(change_list)"
   R-003: "IF target_file CONTAINS multiple_changes THEN REQUIRE(single_integrated_delivery) AND REQUIRE(section_count_match)"
   R-004: "IF project_unconfirmed THEN FORBID(emit_dialog_id)"
@@ -96,14 +98,14 @@ rules_dsl:
       revoked_if: "input_contains(ANY of keyword_list)"
   R-012: "IF any_time THEN FORBID(declare_conversation_end_unilaterally)"
   R-013: "IF action == AFTER_DELIVERY THEN REQUIRE(options_A_B_C_D_with_plain_explanation) AND PAUSE"
-  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW)"
+  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF zone_declared THEN REQUIRE(zone_line_separate)"
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
   R-018: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target)"
   R-019: "IF delivery_contains_structural_change IN [split_file, add_file, delete_file, new_pattern_or_role, fsm_or_layering_change] THEN REQUIRE(list_structural_changes AND prompt_evolution_record) AND FORBID(auto_write_evolution)"
 
   # ── 事前提問（S）──
-  S-001: { rule: "SHALL declare file_count before proposing" }
+  S-001: "SHALL declare three columns: file_count, existing_rule_hit, disposition; new_addition_requires_reason"
   S-002: { rule: "SHALL declare central_layer_decision: yes/no, reason if no" }
   S-003: { rule: "SHALL declare default_value_decision: yes/no" }
   S-004: { rule: "SHALL cite original version or section before modifying existing file" }
@@ -111,12 +113,12 @@ rules_dsl:
   S-006: { rule: "MUST list keywords, affected files with sync notes, confirmed-unaffected files" }
 
   # ── 事後檢查（K）──
-  K-001: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(evidence_6_items: R-001, R-005, R-009, R-011, F-005, F-008)"
+  K-001: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(evidence_6_items: [R-001=S-001_three_columns_filled, R-005, R-009, R-011, F-005, F-008])"
   K-002: "IF trigger == CHECK THEN REQUIRE(search_result: ['✅','已交付','狀態總表']) == 0"
   K-003: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(three_checks: state_set_match, term_numbers_continuous, cross_package_refs_valid)"
 
   # ── 格式規範（F）──
-  F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, author, version)"
+  F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, author, version) AND IF zone_declared THEN REQUIRE(zone_line_separate)"
   F-002: "IF path_mentioned THEN REQUIRE(wrap_in_text_code_block AND relative_path AND full_filename)"
   F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang) AND IF content_contains_code_block THEN REQUIRE(outer_fence == four_backticks)"
   F-005: "IF output == FILE_DELIVERY THEN REQUIRE_EOF_TAG(pattern='/* ═══ EOF ═══ */')"
@@ -124,13 +126,35 @@ rules_dsl:
   F-007: "IF action == MODIFY_FILE THEN REQUIRE(full_file_delivery) AND FORBID(patch_mode)"
   F-008:
     rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY ELSE_IF mode == APPEND_ONLY THEN ENFORCE_RANGE_CONTINUITY"
-    append_only_scope: [SYSTEM-DECISIONS.md, SYSTEM-REJECTED.md, SYSTEM-DEBT.md]
+    append_only_scope: [SYSTEM-DECISIONS.md, SYSTEM-REJECTED.md, SYSTEM-DEBT.md, SYSTEM-ARCHIVE.md]
     append_only_checks:
       - "ID 連續性：新增區段 ID 接續既有最大號"
       - "EOF 存在"
       - "不檢查全文章節數與行數對比"
 
-  # ── R-00 §七 審查機制（本次新增）──
+  # ── R-00 §0.5 編號穩定（本次新增）──
+  R00-0.5:
+    rule: "編號不改號、不重用；廢除直接刪條、跳號、記 EVOLUTION"
+    pre_delete_scan: "掃描已載入引用並改指向；未載入範圍暫停交付，要求 Ken 提供或外部 grep"
+    forbid: "憑空捏造未載入檔之掃描結果"
+
+  # ── 四檔豁免與混合包（本次新增）──
+  四檔豁免:
+    rule: "IF 目標包 ∈ {IP, AP, RP, UP} THEN 熱更新（任何區皆適用）"
+  混合包阻擋:
+    rule: "IF input 同時包含合法四檔與錯區檔案 THEN 全盤退回並警告"
+
+  # ── 歸檔（本次新增）──
+  歸檔:
+    rule: "累積型檔達門檻 → 舊資料搬至 SYSTEM-ARCHIVE.md；正文節尾留一行"
+    thresholds:
+      SYSTEM-REJECTED: "50 條"
+      SYSTEM-DEBT: "已解決者"
+      R-04-learning: "50 條"
+      PROGRESS: "已完成 10 任務"
+      SYSTEM-CONCLUSION: "已結案議題"
+
+  # ── R-00 §七 審查機制 ──
   R00-7.2:
     rule: "核檔案內容、檔案內部格式、跨檔同步、是否引混亂"
     exclude: "交付外層 Code block、交付標頭、對話層格式、一鍵貼上完整性"
@@ -170,6 +194,7 @@ rules_dsl:
 | S-007 | 防護前提確認 | 「何謂並發」「何謂必然」需人判斷，非機械可判 |
 | F-004 | 內層防呆 | 含 md 檔內 YAML 的四反引號例外，DSL 化後條件分支比原文更長 |
 | R00-7.1 | 三 AI 模式與 CHK 合成物 | 屬結構陳述，無單一 predicate；角色邊界由 CHK.md 承載 |
+| 區模型 | 流程 | 多區情境，DSL 易失真 |
 
 **另 2 條說明**：R-011 與 F-008 雖已 DSL 化，但含嵌套條件（R-011 的 keyword_list、F-008 的 APPEND_ONLY），屬「部分 DSL」，仍需散文補充邊界案例。
 
@@ -198,6 +223,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792663001
-W: ai-system-20261022-008#73
+V: 1792700005
+W: ai-system-20261022-009#5
 ═══ */
