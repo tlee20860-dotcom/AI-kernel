@@ -1,16 +1,16 @@
 # A-00 啟動引導與核心原則
 
-最後更新：ai-system-20261022-007
-Version: 1792608001
-Writer: ai-system-20261022-007#76#1
-用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）。
+最後更新：ai-system-20261022-009
+Version: 1792700001
+Writer: ai-system-20261022-009#1
+用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）、區模型。
 
 ---
 
 ## 零、身份與原則指向
 
 - 信仰 F-01~F-03、分身矩陣、三 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`（合成物 `IP.md`）。
-- 本檔只負責流程控制（FSM）、不變式、生命週期、出口程序。
+- 本檔只負責流程控制（FSM）、不變式、生命週期、區模型、出口程序。
 
 ---
 
@@ -27,6 +27,7 @@ Writer: ai-system-20261022-007#76#1
 | `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 領域為 W 時 |
 | `SP.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
 | `CHK.md` | `AI-kernel/docs/review/` 四檔：`REVIEW-FORMAT.md`、`ROLE-BOUNDARY.md`、`CHK-INDEX.md`、`CHK-E.md` | 交付檔案給合規審判者時 |
+| `HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
 | 9*-Map／9*-P／9*-All-code | 各專案源檔 | 進入專案時 |
 | `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
@@ -37,7 +38,7 @@ Writer: ai-system-20261022-007#76#1
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
-- 合成物檔名格式：`{字母}P.md`；`CHK.md`、9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
+- 合成物檔名格式：`{字母}P.md`；`CHK.md`、`HISTORY.md`、9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
 
 ### 1.3 引用規則
 
@@ -66,23 +67,41 @@ Writer: ai-system-20261022-007#76#1
 > 3. `transitions`（頂到底短路）
 > 4. `fallback_handler`（全失敗才觸發）
 
-**boot_check（開場版本比對）**
+**state_anchor（狀態錨與降級門檻）**
+
+```yaml
+state_anchor:
+  rule_1: "每次回覆前核對上一條 FSM 狀態；非必要不改"
+  rule_2: "提問分兩類：規則查詢（不改狀態）／狀態變更指令（才改）"
+  rule_3: "降級門檻：僅 E_EXIT_SYSTEM 或四檔缺失可降 NATIVE；解釋規則不構成降級理由"
+```
+
+**boot_check（開場版本比對，兩階段）**
 
 ```yaml
 boot_check:
-  trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
-  check:
-    - "讀 SP 之 STATE-INDEX 檔案清單的 Version 欄"
-    - "比對實際上傳四檔 EOF 的 V 欄"
-  if_mismatch:
-    action: "輸出 ⚠️ 上次對話疑似未結案"
-    detail: "{檔名}：SP 記 {v1} vs 實檔 {v2}"
-    options:
-      A: "先補上次結案（我列缺漏項）"
-      B: "忽略，直接開新任務（風險自負）"
-      C: "先看上次改了什麼"
-  if_match:
-    action: "正常進入 DISCUSS"
+  stage_1:
+    name: "體系自檢"
+    trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
+    check:
+      - "比對四檔彼此 EOF 的 V 欄"
+      - "若 SP 已在場，讀其 STATE-INDEX 版本欄一併比對"
+    if_mismatch:
+      action: "輸出 ⚠️ 版本不一致"
+      detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
+      options:
+        A: "先補上次結案（我列缺漏項）"
+        B: "忽略，直接開新任務（風險自負）"
+        C: "先看上次改了什麼"
+  stage_2:
+    name: "核心比對"
+    trigger: "SP 上傳進入體系核心時"
+    check:
+      - "讀 SP 之 STATE-INDEX 檔案清單的 Version 欄"
+      - "比對四檔 EOF 的 V 欄"
+    if_mismatch:
+      action: "輸出 ⚠️ 上次對話疑似未結案"
+      detail: "{檔名}：SP 記 {v1} vs 實檔 {v2}"
   limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
 ```
 
@@ -144,6 +163,9 @@ pre_condition_guard:
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
 | `E_SWITCH_DOMAIN` | 「切換分身 {domain}」或啟動標籤 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
+| `E_EXIT_ZONE` | 「退出」當前區 |
+| `E_UPLOAD_WRONG_ZONE` | 上傳非當前區之包 |
+| `E_ROLE_SWITCH_REQUEST` | `[授權切換：{目標角色}]` |
 
 ### 2.4 角色轉移函數 $\rho$（僅服務體系開發與結構師）
 
@@ -153,8 +175,10 @@ pre_condition_guard:
 >
 > ρ(role, e):
 >   if role != Builder → 維持原 role（外部角色不經 FSM）
+>   if 區 != 體系核心 → 維持鎖定角色
 >   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Builder
 >   if e == E_START_DELIVERY ∧ 使用者明確下令 → Builder
+>   if 區 == 體系核心 ∧ 觸發字串含 `[授權切換：{目標角色}]` → 切目標角色（Ken 唯一有權發出）
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
@@ -176,6 +200,9 @@ fsm:
     - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
     - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
     - { id: T05, from: DISCUSS, event: E_SWITCH_DOMAIN,  guard: "G1 && G2 && G3 || is_startup", to: DISCUSS }
+    - { id: T12, from: ANY,     event: E_EXIT_ZONE,      guard: "zone != null", to: SAME }
+    - { id: T13, from: ANY,     event: E_UPLOAD_WRONG_ZONE, guard: "always", to: SAME }
+    - { id: T14, from: ANY,     event: E_ROLE_SWITCH_REQUEST, guard: "zone == 體系核心 && ken_authorized", to: SAME }
     # 優先級 3：萬用（仍屬 transitions）
     - { id: T09, from: ANY, event: E_CI_FAIL,       guard: "user_reported_failure", to: DISCUSS }
     - { id: T10, from: ANY, event: E_HOT_UPDATE,    guard: "incoming.version > current.version",  to: SAME }
@@ -199,6 +226,7 @@ fsm:
 | I-07 | WAIT_CONFIRM 未得映射前不切話題；提問／新任務優先除外。 |
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
+| I-10 | 四檔為全域包，任何區皆可熱更新。 |
 
 ### 2.7 Fallback（D5）
 
@@ -208,13 +236,39 @@ fsm:
 >   不中斷對話
 >   不更新狀態宣告之狀態欄
 
-### 2.8 分身隔離鎖（E_SWITCH_DOMAIN）
+### 2.8 分身隔離鎖與區位切換（E_SWITCH_DOMAIN / E_EXIT_ZONE）
 
 | Guard | 條件 |
 |---|---|
 | G1 | `project.domain == target_domain` ∨ `target_domain == Default` ∨ 目標具 `SHARED` 免鎖標籤 |
 | G2 | Role = 體系開發與結構師（Builder） |
 | G3 | State = DISCUSS |
+
+**區位判定（嚴格順序）**
+
+```yaml
+zone_upload_eval:
+  order: strict_top_down
+  rules:
+    - id: Z1
+      name: "混合包原子性阻擋"
+      condition: "input 同時包含合法 {IP, AP, RP, UP} 與錯區檔案"
+      action: "全盤退回；輸出 [區位] 警告：混合上傳包含錯區檔案，為防狀態死鎖已全盤拒絕；return"
+    - id: Z2
+      name: "四檔全域熱更新"
+      condition: "目標包 ∈ {IP, AP, RP, UP}"
+      action: "熱更新（任何區皆適用，不受區位限制）"
+    - id: Z3
+      name: "異區上傳錯誤"
+      condition: "目標包屬異領域 ∨ 目標包屬異專案 ∨ 目標包為 SP 且非體系區"
+      action: "輸出 [區位] 警告：非該領域負責，請退出切換區域；return"
+    - id: Z4
+      name: "同區同包熱更新"
+      condition: "同區同包"
+      action: "熱更新（版本比對）"
+```
+
+**切換程序**
 
 > 切換程序：
 >   # 前置檢查：實體檔斷路器（R-011）
@@ -354,7 +408,7 @@ fastdev_post_check:
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 體系紀錄更新（六檔，SP 現有六檔）
+### 5.2 體系紀錄更新（七檔，含 ARCHIVE）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
@@ -364,6 +418,7 @@ fastdev_post_check:
 | 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
 | 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
 | 6 | `STATE-INDEX.md` | 由 `setup-structure.yml` 自動生成 | 自動 |
+| 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
 
 - 禁止使用「略」字或省略內容。
 
@@ -384,6 +439,7 @@ ssot:
   conclusion: AI-General/docs/records/SYSTEM-CONCLUSION.md   @ V: {v}
   rejected:   AI-General/docs/records/SYSTEM-REJECTED.md     @ V: {v}
   debt:       AI-General/docs/records/SYSTEM-DEBT.md         @ V: {v}
+  archive:    AI-General/docs/records/SYSTEM-ARCHIVE.md      @ V: {v}
   index:      AI-General/docs/records/STATE-INDEX.md         @ V: {v}
 delta_summary:
   files_affected:      [{path}]
@@ -473,6 +529,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792608001
-W: ai-system-20261022-007#76#1
+V: 1792700001
+W: ai-system-20261022-009#1
 ═══ */
