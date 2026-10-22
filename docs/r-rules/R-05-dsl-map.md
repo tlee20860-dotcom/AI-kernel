@@ -1,6 +1,6 @@
 # R-05 規則 DSL 映射表
 
-用途：將 R-00 之 36 條規則映射為結構化 DSL，或標「保留散文＋理由」。本檔為 Phase 1 前置交付物。
+用途：將 R-00 之 36 條規則映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
 
 ---
 
@@ -38,7 +38,7 @@
 | K-003 | 檢查 | DSL | 三項回歸，可列舉 |
 | F-001 | 格式 | DSL | 六欄標頭，可掃描 |
 | F-002 | 格式 | DSL | 路徑 Code Block，可掃描 |
-| F-003 | 格式 | DSL | 三反引號包裹，可掃描 |
+| F-003 | 格式 | DSL | 三反引號包裹；含代碼塊時外層四反引號 |
 | F-004 | 格式 | 保留散文 | 含例外條款，DSL 化反而更複雜 |
 | F-005 | 格式 | DSL | EOF 三行，可掃描 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
@@ -46,6 +46,19 @@
 | F-008 | 格式 | DSL | 章節數＋行數，可判；含 APPEND_ONLY |
 
 **統計**：DSL 化 30 條；保留散文 6 條（R-007、R-015、S-007、F-004，另 2 條於下方說明）。
+
+### 1.1 R-00 §七 審查機制映射（本次新增）
+
+| 編號 | 類別 | 映射方式 | 理由 |
+|---|---|---|---|
+| R00-7.1 | 審查 | 保留散文 | 三 AI 模式與 CHK 合成物屬結構陳述，無單一 predicate |
+| R00-7.2 | 審查 | DSL | 核／不核範圍可列舉 |
+| R00-7.3 | 審查 | DSL | L1~L4 層級可列舉 |
+| R00-7.4 | 審查 | DSL | LV-01~07 可判；LV-03「理由充分」部分保留散文 |
+| R00-7.5 | 審查 | DSL | 升層條件可列舉 |
+| R00-7.6 | 審查 | DSL | RV-01~04 可判 |
+
+**詞表說明**：詞 34 名稱變更、詞 48~57 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
 
 ---
 
@@ -101,7 +114,7 @@ rules_dsl:
   # ── 格式規範（F）──
   F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, author, version)"
   F-002: "IF path_mentioned THEN REQUIRE(wrap_in_text_code_block AND relative_path AND full_filename)"
-  F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang)"
+  F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang) AND IF content_contains_code_block THEN REQUIRE(outer_fence == four_backticks)"
   F-005: "IF output == FILE_DELIVERY THEN REQUIRE_EOF_TAG(pattern='/* ═══ EOF ═══ */')"
   F-006: "IF has_modifications THEN REQUIRE(status_table_at_bottom)"
   F-007: "IF action == MODIFY_FILE THEN REQUIRE(full_file_delivery) AND FORBID(patch_mode)"
@@ -112,6 +125,34 @@ rules_dsl:
       - "ID 連續性：新增區段 ID 接續既有最大號"
       - "EOF 存在"
       - "不檢查全文章節數與行數對比"
+
+  # ── R-00 §七 審查機制（本次新增）──
+  R00-7.2:
+    rule: "核檔案內容、檔案內部格式、跨檔同步、是否引混亂"
+    exclude: "交付外層 Code block、交付標頭、對話層格式、一鍵貼上完整性"
+  R00-7.3: "IF review THEN DEFAULT(level == L1); available: [L1, L2, L3, L4]"
+  R00-7.4:
+    LV-01: "未特別指示 → L1"
+    LV-02: "符合升層條件即升，取最高"
+    LV-03: "審判者只能建議升層，須附理由"
+    LV-04: "Ken 可任一時點指定層級"
+    LV-05: "升層須記錄 CHK-id｜層級：Lx（理由：…）"
+    LV-06: "未升層視為 L1"
+    LV-07: "審判者不得自行升層或降層"
+  R00-7.5:
+    upgrade_conditions:
+      cross_file_sync: L2
+      add_or_delete_section: L2
+      fsm_state_role: L3
+      rule_conflict_exemption: L3
+      ken_requests_repeat: L3
+      cross_file_and_core_rule: L4
+      ken_explicit: EXPLICIT
+  R00-7.6:
+    RV-01: "Ken 可要求同一項再給一組前中後"
+    RV-02: "第二次三個位置不得與第一次全同"
+    RV-03: "全同 → 標記疑似未真讀，改 FAIL 或人工核"
+    RV-04: "審判者不得拒絕重複要求"
 ```
 
 ---
@@ -124,6 +165,7 @@ rules_dsl:
 | R-015 | 原生知識與 SOP 衝突 | 含權限階梯、降級、架構溢出三層，DSL 化後難以表達「宣告位置」與「取得許可」的順序關係 |
 | S-007 | 防護前提確認 | 「何謂並發」「何謂必然」需人判斷，非機械可判 |
 | F-004 | 內層防呆 | 含 md 檔內 YAML 的四反引號例外，DSL 化後條件分支比原文更長 |
+| R00-7.1 | 三 AI 模式與 CHK 合成物 | 屬結構陳述，無單一 predicate；角色邊界由 CHK.md 承載 |
 
 **另 2 條說明**：R-011 與 F-008 雖已 DSL 化，但含嵌套條件（R-011 的 keyword_list、F-008 的 APPEND_ONLY），屬「部分 DSL」，仍需散文補充邊界案例。
 
@@ -136,6 +178,8 @@ rules_dsl:
 | R-00 新增／修改規則 | 本表同步更新映射 |
 | 某條 DSL 實測誤判率高 | 降級為散文＋理由 |
 | 某條散文可形式化 | 升級為 DSL |
+| R-00 §七 子節變動 | 同步 §1.1 與 §二 `R00-7.x` |
+| R-03 詞表變動 | 不重複映射，由 R-03 自身保證 |
 
 ---
 
@@ -143,10 +187,11 @@ rules_dsl:
 
 - 本表為 **索引與映射**，不取代 R-00。
 - R-00 仍為規則 SSOT；本表僅供 AI 快速掃描與 Phase 1 重寫依據。
+- 詞表 SSOT 在 R-03，本表不重複映射詞表。
 - 衝突時以 R-00 為準（依 R-03 §二「本表與 R-00 衝突以 R-00 為準」）。
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792600027
-W: ai-system-20261021-006#6
+V: 1792609001
+W: ai-system-20261022-007#78#1
 ═══ */
