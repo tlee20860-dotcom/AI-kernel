@@ -125,6 +125,6 @@ CHK-E-xxx｜判定：PASS／FAIL／N/A｜選中：B（中段）
 
 /* ═══ EOF ═══
 F: docs/review/REVIEW-FORMAT.md
-V: 1792605001
-W: 待確認#66#1
+V: 1792605003
+W: ai-system-20261022-007#70#1
 ═══ */
