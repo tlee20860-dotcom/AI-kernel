@@ -298,7 +298,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者）；內文不得重複 Version 或 Writer | 檔尾含三行 EOF，且內文無 Version／Writer | 無 EOF；內文重複 Version | 檢查檔尾與內文 |
+| MUST | 每個檔案 | EOF 三行：F（路徑）／V（Unix epoch）／W（編寫者）；內文不得重複 Version 或 Writer（代碼內容除外） | 檔尾含三行 EOF，且內文無 Version／Writer（代碼內容除外） | 無 EOF；內文重複 Version（不含代碼區塊） | 檢查檔尾與內文（代碼區塊除外） |
 
 <a id="f-006"></a>
 ### F-006 狀態總表（位置限制）
@@ -418,6 +418,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-00-rules.md
-V: 1792700003
-W: ai-system-20261022-009#3
+V: 1792705002
+W: ai-system-20261022-009#1
 ═══ */
