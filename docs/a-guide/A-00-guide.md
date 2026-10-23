@@ -1,7 +1,7 @@
 # A-00 啟動引導與核心原則
 
 最後更新：ai-system-20261022-009
-Version: 1792719500
+Version: 1792719600
 Writer: ai-system-20261022-009#1
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）、區模型。
 
@@ -192,7 +192,7 @@ fsm:
     - { id: T07b, from: WAIT_CONFIRM, event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
     - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
     # 優先級 2：常規
-    - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Builder", to: DELIVER }
+    - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Builder && received_confirm_word == true", to: DELIVER }
     - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Builder", to: CHECK }
     - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: WAIT_CONFIRM }
     - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
@@ -383,7 +383,7 @@ ccl_matrix:
 ### 5.1 觸發與 Guard（含 D4、短路、pending）
 
 > on E_HANDOFF（「結束對話」／「準備轉移」）：
->   affected = deriveAffected(交付清單)          # 見 §5.6
+>   affected = deriveAffected(交付清單)
 >   if affected == ∅：
 >       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
 >   else：
@@ -517,6 +517,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792719500
+V: 1792719600
 W: ai-system-20261022-009#1
 ═══ */
