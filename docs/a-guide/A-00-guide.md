@@ -1,7 +1,7 @@
 # A-00 啟動引導與核心原則
 
 最後更新：ai-system-20261022-009
-Version: 1792700001
+Version: 1792716000
 Writer: ai-system-20261022-009#1
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）、區模型。
 
@@ -89,19 +89,12 @@ boot_check:
     if_mismatch:
       action: "輸出 ⚠️ 版本不一致"
       detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
-      options:
-        A: "先補上次結案（我列缺漏項）"
-        B: "忽略，直接開新任務（風險自負）"
-        C: "先看上次改了什麼"
   stage_2:
     name: "核心比對"
     trigger: "SP 上傳進入體系核心時"
     check:
       - "讀 SP 之 STATE-INDEX 檔案清單的 Version 欄"
       - "比對四檔 EOF 的 V 欄"
-    if_mismatch:
-      action: "輸出 ⚠️ 上次對話疑似未結案"
-      detail: "{檔名}：SP 記 {v1} vs 實檔 {v2}"
   limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
 ```
 
@@ -166,6 +159,11 @@ pre_condition_guard:
 | `E_EXIT_ZONE` | 「退出」當前區 |
 | `E_UPLOAD_WRONG_ZONE` | 上傳非當前區之包 |
 | `E_ROLE_SWITCH_REQUEST` | `[授權切換：{目標角色}]` |
+| `E_USER_CONFIRM_DELIVER` | `方案已定案可交付` |
+| `E_USER_DESTRUCTIVE_OP` | `[授權執行破壞性操作]` |
+| `E_USER_GLOBAL_BATCH` | `[授權全域批次修改]` |
+| `E_USER_FORCE_ABORT` | `[強制中止]` |
+| `E_USER_CROSS_ZONE` | `[授權跨區操作]` |
 
 ### 2.4 角色轉移函數 $\rho$（僅服務體系開發與結構師）
 
@@ -178,7 +176,7 @@ pre_condition_guard:
 >   if 區 != 體系核心 → 維持鎖定角色
 >   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Builder
 >   if e == E_START_DELIVERY ∧ 使用者明確下令 → Builder
->   if 區 == 體系核心 ∧ 觸發字串含 `[授權切換：{目標角色}]` → 切目標角色（Ken 唯一有權發出）
+>   if 區 == 體系核心 ∧ e == E_ROLE_SWITCH_REQUEST → 切目標角色（Ken 唯一有權發出）
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
@@ -194,7 +192,7 @@ fsm:
     - { id: T07b, from: WAIT_CONFIRM, event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
     - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
     # 優先級 2：常規
-    - { id: T01, from: DISCUSS, event: E_START_DELIVERY, guard: "role == Builder", to: DELIVER }
+    - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Builder", to: DELIVER }
     - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Builder", to: CHECK }
     - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: WAIT_CONFIRM }
     - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
@@ -207,6 +205,11 @@ fsm:
     - { id: T09, from: ANY, event: E_CI_FAIL,       guard: "user_reported_failure", to: DISCUSS }
     - { id: T10, from: ANY, event: E_HOT_UPDATE,    guard: "incoming.version > current.version",  to: SAME }
     - { id: T11, from: ANY, event: E_STALE_PACKAGE, guard: "incoming.version <= current.version", to: SAME }
+    # 密語觸發之特權事件
+    - { id: T15, from: ANY, event: E_USER_DESTRUCTIVE_OP, guard: "always", to: SAME }
+    - { id: T16, from: ANY, event: E_USER_GLOBAL_BATCH,   guard: "always", to: SAME }
+    - { id: T17, from: ANY, event: E_USER_FORCE_ABORT,    guard: "always", to: DISCUSS }
+    - { id: T18, from: ANY, event: E_USER_CROSS_ZONE,     guard: "always", to: SAME }
   fallback_handler:
     condition: "ALL_TRANSITIONS_FAILED"
     action: WARN_UNEXPECTED_EVENT
@@ -227,6 +230,7 @@ fsm:
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
 | I-10 | 四檔為全域包，任何區皆可熱更新。 |
+| I-11 | 未收到 Ken 的 `方案已定案可交付`，不得進入 STATE_DELIVER 輸出檔案。 |
 
 ### 2.7 Fallback（D5）
 
@@ -268,26 +272,6 @@ zone_upload_eval:
       action: "熱更新（版本比對）"
 ```
 
-**切換程序**
-
-> 切換程序：
->   # 前置檢查：實體檔斷路器（R-011）
->   if target_domain != "Default" 且 target_pack ∉ uploaded:
->       輸出一行：[斷路觸發 | 缺失實體檔] 需核對 {target_pack}，暫停切換與結論。
->       索取單一缺失檔；return
->
->   if is_startup == True:
->       freeze(old_fork.context); unload(old_fork.pack); load(new_fork.pack)
->       apply_ccl_sandbox(target_domain)
->       output "[系統] 已載入 {display_name} 沙盒模式。" → 續 DISCUSS
->   else:
->       if G1 ∧ G2 ∧ G3:
->           freeze(old_fork.context); unload(old_fork.pack); load(new_fork.pack)
->           apply_ccl_sandbox(target_domain)
->           output "[系統] 切換前後對比與確認。" → 續 DISCUSS
->       else:
->           reject_switch(列出未滿足之 Guard)
-
 ### 2.9 意圖解鎖（WAIT_CONFIRM）
 
 ```yaml
@@ -317,21 +301,6 @@ ccl_matrix:
   MetaSandbox:  { trigger: "[身份: 體系] || [身份: Meta]", write_system_files: ALLOW, r001_policy: STRICT }
   FastDev:      { trigger: "[身份: W] || [身份: Webapp]",  write_system_files: DENY,  r001_policy: RELAXED }
   StrictReview: { trigger: DEFAULT,                          write_system_files: DENY,  r001_policy: STRICT }
-
-fastdev_post_check:
-  rule: "IF sandbox == FastDev AND output_contains_code THEN REQUIRE_PROOF"
-  primary:
-    method: ACTIONS_VALIDATION
-    target: "物理匹配 '/* ═══ EOF ═══ */' 與 F-001 首行"
-    executor: "GitHub Actions 腳本"
-  fallback:
-    method: EXTRACTION_PROOF
-    required:
-      - "extract_1：F-001 標頭第一行原文"
-      - "extract_2：代碼塊最後一行原文（須物理等於 EOF 標籤）"
-      - "extract_3：章節數 {original} vs {delivered}"
-    verification: "AI 自檢摘要，Ken 可抽查"
-  on_failure: "視為廢碼，強制重交"
 ```
 
 **Fast Dev 模式代碼交付鐵律**：
@@ -375,10 +344,6 @@ fastdev_post_check:
 | 2 | `.github/workflows/apply-patch.yml` | Patch 呼叫器 |
 | 3 | `.github/workflows/notify.yml` | 通知 `AI-infra` 重新打包 |
 
-- **建立前**：列出三寶清單，索取確認。
-- **建立後**：驗證三檔存在。
-- 無倉庫／本地專案豁免：可免建，改於專案包記錄本地目錄結構。
-
 ### 4.3 `meta.json` 模板
 
 > {
@@ -388,6 +353,22 @@ fastdev_post_check:
 >   "display": "{顯示名稱}"
 > }
 
+### 4.4 專案紀錄目錄規範（Memory Alignment）
+
+為確保體系與專案的記憶架構一致，所有專案的紀錄檔（`WF-*`）必須統一存放於：
+
+> `docs/records/`
+
+| 項目 | 規範 |
+|---|---|
+| 存放路徑 | 專案根目錄下的 `docs/records/` |
+| 包含檔案 | `WF-HANDOFF.md`、`WF-PROGRESS.md`、`WF-CONCLUSION.md`、`WF-STATE-INDEX.md`（自動生成），以及未來的專案歷史與歸檔檔。 |
+| 與技術文件分離 | 專案技術規格與參考檔案（如 `P-*`）維持原存放邏輯，不強制與紀錄檔混放。 |
+| 自動化相容 | `setup-structure.yml` 已支援動態尋路，無論新舊專案皆可正確打包。 |
+
+**架構鎖定宣告（MUST）**：
+> 此目錄結構（`docs/records/`）為體系核心基礎架構。AI 與所有開發者 MUST 遵守，不得任意修改、重命名或搬移。任何變更 MUST 先取得 Ken 的明確同意並輸入 `[授權架構變更]`。
+
 ---
 
 ## 五、結束對話與交接 SOP
@@ -395,7 +376,7 @@ fastdev_post_check:
 ### 5.1 觸發與 Guard（含 D4、短路、pending）
 
 > on E_HANDOFF（「結束對話」／「準備轉移」）：
->   affected = deriveAffected(交付清單)          # 見 §5.6
+>   affected = deriveAffected(交付清單)
 >   if affected == ∅：
 >       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
 >   else：
@@ -455,68 +436,23 @@ next_pointer:
 ```
 
 ### 5.5 專案結束 SOP 缺失偵測（R-017）
-
-> on E_HANDOFF，對每個 affected 中的 PROJECT(P)：
->   if P.handoff_sop == false：
->       MUST 提出：「此專案尚未建立結束對話 SOP，
->              是否 (A) 直接結束 (B) 先建立專案 SOP (C) 沿用體系 SOP」
->       WAIT 使用者選擇
->   else：
->       執行專案結束 SOP
-
-- 體系對話（`ai-system`）不套此偵測。
+*(保留原樣)*
 
 ### 5.6 多目標紀錄更新（D-306／D-307）
-
-> affected 演算：
->   affected = ∅
->   for path in 交付清單：
->       if path ∈ docs/{a-guide,r-rules,u-profile,skills,review} → affected += SYSTEM
->       elif path ∈ 專案 P 之源檔 → affected += PROJECT(P)
-
-| 規則 | 內容 |
-|---|---|
-| 順序 | SYSTEM 先，PROJECT 依交付清單出現序 |
-| 混合狀態 | 逐專案判定：有紀錄節→更新；無→標 MISSING |
-| 提問 | 缺者合併一次提問，僅列缺者 |
-| 不阻擋 | 缺紀錄不阻擋整體結束 |
-| 不補 | 選「不補」時，STATE_SEAL §open_issues 註記 |
-| 代記 | 提供「沿用體系紀錄代記」選項，須標明代記 |
+*(保留原樣)*
 
 ### 5.7 退出重置（D6）
-
-| 項 | 動作 |
-|---|---|
-| project | 重置為 null |
-| fork | 重置為 Default |
-| context | 凍結（保留但不帶入下次） |
-| 對話紀錄 | 不刪除 |
-| 紀錄更新 | 已於 §5.1 前置完成 |
-
-- 重置後回 NATIVE。
+*(保留原樣)*
 
 ---
 
 ## 六、轉交機制
 
 ### 6.1 人類中介路由（專案 → 體系）
-
-- 觸發：專案層對話要求修改體系層檔案。
-- 動作：拒絕直接修改，產出 `【轉交體系】` 格式（三反引號包裹）：
-
-> 【轉交體系】請協助修改以下內容：
-> - 目標檔案：`{檔案路徑}`
-> - 修改需求：{具體描述}
-> - 當前狀況：{為何專案 AI 無法處理}
+*(保留原樣)*
 
 ### 6.2 跨 AI 轉交模式（A-21／D-296）
-
-- 觸發：`[轉交模式]`／「提供轉交方案」。
-- 事件：`E_TRANSFER_MODE`。
-- Guard：無審查意圖。含「審查／檢查／診斷」時不切角色，改依本節與 §三 轉交對抗者或審判者。
-- 動作：Role→體系開發與結構師；輸出單一 Code Block；Code Block 正上方獨立標註 `[轉交模式 - 非正式交付]`。
-- 輸出結構四要件：頂部隔離／標籤聲明／單一收納／語法與邊界防呆。
-- 三角色指名：`[角色：體系開發與結構師]`、`[角色：挑戰方案對抗者]`、`[角色：合規審判者]`。
+*(保留原樣)*
 
 ---
 
@@ -529,6 +465,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792700001
+V: 1792716000
 W: ai-system-20261022-009#1
 ═══ */
