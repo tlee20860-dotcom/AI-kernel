@@ -1,11 +1,10 @@
-
 # R-05 規則 DSL 映射表
 
-用途：將 R-00 之 40 條規則映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
+用途：將 R-00 之鐵律映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
 
 ---
 
-## 一、映射總表（40 條）
+## 一、映射總表
 
 | 編號 | 類別 | 映射方式 | 理由 |
 |---|---|---|---|
@@ -18,7 +17,7 @@
 | R-007 | 鐵律 | 保留散文 | 判斷依結構、語氣，無 predicate 可核 |
 | R-008 | 鐵律 | DSL | 交付後禁自印 K，可判 |
 | R-009 | 鐵律 | DSL | 繁中，可掃描 |
-| R-010 | 鐵律 | DSL | 完整檔交付，可判 |
+| R-010 | 鐵律 | DSL | 完整檔交付＋單檔限制，可判 |
 | R-011 | 鐵律 | DSL | 斷路器，含輸出位置與豁免剝奪 |
 | R-012 | 鐵律 | DSL | 禁主動宣告結束，可判 |
 | R-013 | 鐵律 | DSL | 交付後四選項，可判 |
@@ -31,7 +30,6 @@
 | R-020 | 鐵律 | DSL | 破壞性操作需密語，可掃描 |
 | R-021 | 鐵律 | DSL | 全域批次需密語，可掃描 |
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
-| R-023 | 鐵律 | DSL | 跨區操作需密語，可掃描 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
@@ -49,9 +47,9 @@
 | F-005 | 格式 | DSL | EOF 三行，可掃描 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
 | F-007 | 格式 | DSL | Patch 廢除，可判 |
-| F-008 | 格式 | DSL | 章節數＋行數，可判；含 APPEND_ONLY |
+| F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略詞彙，可判；含 APPEND_ONLY |
 
-**統計**：DSL 化 35 條；保留散文 5 條（R-007、R-015、S-007、F-004、區模型）。
+**統計**：DSL 化 35 條；保留散文 5 條（R-007、R-015、S-007、F-004、R00-7.1）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -77,7 +75,7 @@
 ```yaml
 rules_dsl:
   # ── 行為鐵律（R）──
-  R-001: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT AND sandbox != FastDev THEN REQUIRE(propose_before_deliver) AND REQUIRE(E_USER_CONFIRM_DELIVER_received)"
+  R-001: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT THEN REQUIRE(propose_before_deliver) AND REQUIRE(E_USER_CONFIRM_DELIVER_received OR E_USER_CONTINUE_DELIVER_received)"
   R-002: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT THEN FORBID(file_content) AND REQUIRE(change_list)"
   R-003: "IF target_file CONTAINS multiple_changes THEN REQUIRE(single_integrated_delivery) AND REQUIRE(section_count_match)"
   R-004: "IF project_unconfirmed THEN FORBID(emit_dialog_id)"
@@ -85,7 +83,7 @@ rules_dsl:
   R-006: "IF proposing THEN REQUIRE(declare_file_count) AND IF file_count >= 2 THEN REQUIRE(reason_not_one)"
   R-008: "IF action == AFTER_DELIVERY THEN FORBID(auto_emit_K002)"
   R-009: "IF response == ANY THEN REQUIRE(lang == ZH_TW AND no_simplified_chars)"
-  R-010: "IF action == DELIVER_FILE THEN REQUIRE(mode == FULL_FILE) AND REQUIRE(F-001_header_with_mode)"
+  R-010: "IF action == DELIVER_FILE THEN REQUIRE(mode == FULL_FILE) AND REQUIRE(one_file_per_reply) AND REQUIRE(F-001_header_with_mode)"
   R-011:
     trigger: "target_file == MISSING AND target_is_generic == false"
     generic_declaration: "MUST DECLARE domain_classification"
@@ -103,7 +101,7 @@ rules_dsl:
       revoked_if: "input_contains(ANY of keyword_list)"
   R-012: "IF any_time THEN FORBID(declare_conversation_end_unilaterally)"
   R-013: "IF action == AFTER_DELIVERY THEN REQUIRE(options_A_B_C_D_with_plain_explanation) AND PAUSE"
-  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF zone_declared THEN REQUIRE(zone_line_separate) AND IF prompt_word_given THEN REQUIRE(separate_code_block)"
+  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block)"
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
   R-018: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target)"
@@ -111,7 +109,6 @@ rules_dsl:
   R-020: "IF action == DESTRUCTIVE_OPERATION THEN REQUIRE(E_USER_DESTRUCTIVE_OP_received)"
   R-021: "IF action == GLOBAL_BATCH_MODIFY THEN REQUIRE(E_USER_GLOBAL_BATCH_received)"
   R-022: "IF event == E_USER_FORCE_ABORT THEN EXECUTE(stop_all_output AND transition_to_DISCUSS)"
-  R-023: "IF action == CROSS_ZONE_ACCESS THEN REQUIRE(E_USER_CROSS_ZONE_received)"
 
   # ── 事前提問（S）──
   S-001: "SHALL declare three columns: file_count, existing_rule_hit, disposition; new_addition_requires_reason"
@@ -127,14 +124,15 @@ rules_dsl:
   K-003: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(three_checks: state_set_match, term_numbers_continuous, cross_package_refs_valid)"
 
   # ── 格式規範（F）──
-  F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, author, version) AND IF zone_declared THEN REQUIRE(zone_line_separate)"
+  F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, author, version)"
   F-002: "IF path_mentioned THEN REQUIRE(wrap_in_text_code_block AND relative_path AND full_filename)"
   F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang) AND IF content_contains_code_block THEN REQUIRE(outer_fence == four_backticks)"
-  F-005: "IF output == FILE_DELIVERY THEN REQUIRE_EOF_TAG(pattern='/* ═══ EOF ═══ */')"
+  F-005: "IF output == FILE_DELIVERY THEN REQUIRE(EOF_TAG_and_no_duplicate_version_in_content)"
   F-006: "IF has_modifications THEN REQUIRE(status_table_at_bottom)"
   F-007: "IF action == MODIFY_FILE THEN REQUIRE(full_file_delivery) AND FORBID(patch_mode)"
   F-008:
-    rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY ELSE_IF mode == APPEND_ONLY THEN ENFORCE_RANGE_CONTINUITY"
+    rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY AND FORBID(forbidden_words) ELSE_IF mode == APPEND_ONLY THEN ENFORCE_RANGE_CONTINUITY"
+    forbidden_words: ["略", "保留原樣", "同上", "與前相同", "內容不變", "（省略）", "（程式碼略）", "...", "…", "參考前文", "其餘同前"]
     append_only_scope: [SYSTEM-DECISIONS.md, SYSTEM-REJECTED.md, SYSTEM-DEBT.md, SYSTEM-ARCHIVE.md]
     append_only_checks:
       - "ID 連續性：新增區段 ID 接續既有最大號"
@@ -143,10 +141,10 @@ rules_dsl:
 
   # ── FSM 密語事件（本次新增）──
   E_USER_CONFIRM_DELIVER: "觸發詞 == '方案已定案可交付'"
+  E_USER_CONTINUE_DELIVER: "觸發詞 == '[繼續交付]'"
   E_USER_DESTRUCTIVE_OP: "觸發詞 == '[授權執行破壞性操作]'"
   E_USER_GLOBAL_BATCH: "觸發詞 == '[授權全域批次修改]'"
   E_USER_FORCE_ABORT: "觸發詞 == '[強制中止]'"
-  E_USER_CROSS_ZONE: "觸發詞 == '[授權跨區操作]'"
 
   # ── R-00 §七 審查機制 ──
   R00-7.2:
@@ -188,7 +186,6 @@ rules_dsl:
 | S-007 | 防護前提確認 | 「何謂並發」「何謂必然」需人判斷，非機械可判 |
 | F-004 | 內層防呆 | 含 md 檔內 YAML 的四反引號例外，DSL 化後條件分支比原文更長 |
 | R00-7.1 | 三 AI 模式與 CHK 合成物 | 屬結構陳述，無單一 predicate；角色邊界由 CHK.md 承載 |
-| 區模型 | 流程 | 多區情境，DSL 易失真 |
 
 **另 2 條說明**：R-011 與 F-008 雖已 DSL 化，但含嵌套條件（R-011 的 keyword_list、F-008 的 APPEND_ONLY），屬「部分 DSL」，仍需散文補充邊界案例。
 
@@ -215,6 +212,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792718000
-W: ai-system-20261022-009#1
+V: 1792900032
+W: ai-system-20261024-012#15
 ═══ */
