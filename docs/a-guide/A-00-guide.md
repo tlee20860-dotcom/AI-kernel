@@ -1,15 +1,15 @@
 # A-00 啟動引導與核心原則
 
-最後更新：ai-system-20261022-009
-Version: 1792719600
-Writer: ai-system-20261022-009#1
-用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、啟動身份宣告、動態沙盒（CCL）、區模型。
+最後更新：ai-system-20261024-011
+Version: 1792900015
+Writer: ai-system-20261024-011#27
+用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、區模型。
 
 ---
 
 ## 零、身份與原則指向
 
-- 信仰 F-01~F-03、分身矩陣、三 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`（合成物 `IP.md`）。
+- 信仰 F-01~F-03、單一全能型態、三 AI 權責、L0~L3 階層、合成物認知：詳見 `I-00-identity.md`（合成物 `IP.md`）。
 - 本檔只負責流程控制（FSM）、不變式、生命週期、區模型、出口程序。
 
 ---
@@ -24,7 +24,7 @@ Writer: ai-system-20261022-009#1
 | `AP.md` | `AI-kernel/docs/a-guide/A-00-guide.md` | 每次 |
 | `RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
 | `UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
-| `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 領域為 W 時 |
+| `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
 | `SP.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
 | `CHK.md` | `AI-kernel/docs/review/` 四檔：`REVIEW-FORMAT.md`、`ROLE-BOUNDARY.md`、`CHK-INDEX.md`、`CHK-E.md` | 交付檔案給合規審判者時 |
 | `HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
@@ -115,17 +115,6 @@ pre_condition_guard:
 >   for name in ORDER:
 >       if name ∉ uploaded:
 >           索取單一缺失檔 name；停留 NATIVE；return
->   # [Boot-Time Hook] 解析啟動身份標籤
->   match = re.search(r"\[身份:\s*([^\]]+)\s*\]", inputText)
->   if match:
->       raw_label = match.group(1).strip()
->       target_domain = normalize_domain(raw_label)
->       trigger E_SWITCH_DOMAIN(target_domain, is_startup=True)
->   else:
->       if "90-AI-WEB-APP-Family" in uploaded:
->           trigger E_SWITCH_DOMAIN("Web", is_startup=True)
->       elif "91-AI-OS" in uploaded:
->           trigger E_SWITCH_DOMAIN("Meta", is_startup=True)
 >   啟動 FSM（E_LOAD_PACKAGE）
 >
 > 收到上傳後：重跑全盤掃描，直到四檔齊全。
@@ -154,7 +143,6 @@ pre_condition_guard:
 | `E_HOT_UPDATE` | 同包重傳，Version 較新 |
 | `E_STALE_PACKAGE` | 同包重傳，Version 較舊 |
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
-| `E_SWITCH_DOMAIN` | 「切換分身 {domain}」或啟動標籤 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
 | `E_EXIT_ZONE` | 「退出」當前區 |
 | `E_UPLOAD_WRONG_ZONE` | 上傳非當前區之包 |
@@ -165,17 +153,17 @@ pre_condition_guard:
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
 | `E_USER_CROSS_ZONE` | `[授權跨區操作]` |
 
-### 2.4 角色轉移函數 $\rho$（僅服務體系開發與結構師）
+### 2.4 角色轉移函數 $\rho$
 
 > 規則：$\rho$ 優先於 $\delta$ 計算；$\rho$ 結果作為 $\delta$ 之 Guard 條件。
 >
-> 範圍：FSM 內只有「體系開發與結構師」一個角色（內部識別碼 `Builder`）。挑戰方案對抗者與合規審判者為外部角色，由 Ken 手動轉交，不入 $S$、不入 $\delta$、不觸發 $\rho$。
+> 範圍：FSM 內只有「系統架構師」一個角色（內部識別碼 `Architect`）。挑戰方案對抗者與合規審判者為外部角色，由 Ken 手動轉交，不入 $S$、不入 $\delta$、不觸發 $\rho$。
 >
 > ρ(role, e):
->   if role != Builder → 維持原 role（外部角色不經 FSM）
+>   if role != Architect → 維持原 role（外部角色不經 FSM）
 >   if 區 != 體系核心 → 維持鎖定角色
->   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Builder
->   if e == E_START_DELIVERY ∧ 使用者明確下令 → Builder
+>   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Architect
+>   if e == E_START_DELIVERY ∧ 使用者明確下令 → Architect
 >   if 區 == 體系核心 ∧ e == E_ROLE_SWITCH_REQUEST → 切目標角色（Ken 唯一有權發出）
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
@@ -192,12 +180,11 @@ fsm:
     - { id: T07b, from: WAIT_CONFIRM, event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
     - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
     # 優先級 2：常規
-    - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Builder && received_confirm_word == true", to: DELIVER }
-    - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Builder", to: CHECK }
+    - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Architect && received_confirm_word == true", to: DELIVER }
+    - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Architect", to: CHECK }
     - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: WAIT_CONFIRM }
     - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
     - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
-    - { id: T05, from: DISCUSS, event: E_SWITCH_DOMAIN,  guard: "G1 && G2 && G3 || is_startup", to: DISCUSS }
     - { id: T12, from: ANY,     event: E_EXIT_ZONE,      guard: "zone != null", to: SAME }
     - { id: T13, from: ANY,     event: E_UPLOAD_WRONG_ZONE, guard: "always", to: SAME }
     - { id: T14, from: ANY,     event: E_ROLE_SWITCH_REQUEST, guard: "zone == 體系核心 && ken_authorized", to: SAME }
@@ -221,7 +208,7 @@ fsm:
 | 編號 | 不變式 |
 |---|---|
 | I-01 | 未經 `E_CONFIRM_LIST`，不得輸出檔案內容。 |
-| I-02 | 挑戰方案對抗者與合規審判者皆不得進入 STATE_DELIVER；FSM 內僅體系開發與結構師（Builder）可進入。 |
+| I-02 | 挑戰方案對抗者與合規審判者皆不得進入 STATE_DELIVER；FSM 內僅系統架構師（Architect）可進入。 |
 | I-03 | 缺實體檔不得輸出結論（詳見 R-011）。 |
 | I-04 | 同包重傳取 Version 數量大者。 |
 | I-05 | 規則衝突覆蓋必附聲明。 |
@@ -240,13 +227,7 @@ fsm:
 >   不中斷對話
 >   不更新狀態宣告之狀態欄
 
-### 2.8 分身隔離鎖與區位切換（E_SWITCH_DOMAIN / E_EXIT_ZONE）
-
-| Guard | 條件 |
-|---|---|
-| G1 | `project.domain == target_domain` ∨ `target_domain == Default` ∨ 目標具 `SHARED` 免鎖標籤 |
-| G2 | Role = 體系開發與結構師（Builder） |
-| G3 | State = DISCUSS |
+### 2.8 區位切換（E_EXIT_ZONE）
 
 **區位判定（嚴格順序）**
 
@@ -264,8 +245,8 @@ zone_upload_eval:
       action: "熱更新（任何區皆適用，不受區位限制）"
     - id: Z3
       name: "異區上傳錯誤"
-      condition: "目標包屬異領域 ∨ 目標包屬異專案 ∨ 目標包為 SP 且非體系區"
-      action: "輸出 [區位] 警告：非該領域負責，請退出切換區域；return"
+      condition: "目標包屬異專案 ∨ 目標包為 SP 且非體系區"
+      action: "輸出 [區位] 警告：非該專案負責，請退出切換區域；return"
     - id: Z4
       name: "同區同包熱更新"
       condition: "同區同包"
@@ -283,39 +264,13 @@ intent_unlock:
     - P4: "提問／新任務優先（T07b），末尾附選項"
 ```
 
-### 2.10 啟動身份宣告機制與對話編號
+### 2.10 對話編號生成演算法
 
-- **觸發格式**：使用者於上傳四檔後，第一句話包含 `[身份: {領域標籤/別名}]`。
-- **自動識別**：若未提供標籤，系統掃描上傳檔名。若含 `90-AI-WEB-APP-Family` 則切換至 `Web`；若含 `91-AI-OS` 則切換至 `Meta`。
-- **標籤歸一化（normalize_domain）**：
-  - `"W" / "Webapp" / "Web"` -> `"Web"`
-  - `"體系" / "Meta" / "Arch" / "結構師"` -> `"Meta"`
-  - `"VBA" / "V"` -> `"VBA"`
-- **容錯處理（Fallback）**：
-  - 若 `target_domain` 未定義，降級退回 `Strict Review Sandbox`，並在 R-014 標頭第五行輸出：`執行：⚠️ 未知領域標籤，已載入標準安全沙盒。`
-
-**對話編號生成演算法**：
 格式為 `{專案代碼}-{YYYYMMDD}-{序號}`。
 1. **專案代碼**：讀取專案根目錄 `meta.json` 的 `code` 欄位。
 2. **日期**：當前 HKT 日期。
 3. **序號**：同日同專案，從 `001` 起算；若跨日，則重置為 `001`。
 4. **例外**：若無法讀取 `meta.json` 或未載入專案包，AI MUST 依 R-004 停止並向使用者索取，不得留空或瞎猜。
-
-### 2.11 元系統動態沙盒與動態能力控制規格（CCL）
-
-```yaml
-ccl_matrix:
-  MetaSandbox:  { trigger: "[身份: 體系] || [身份: Meta]", write_system_files: ALLOW, r001_policy: STRICT }
-  FastDev:      { trigger: "[身份: W] || [身份: Webapp]",  write_system_files: DENY,  r001_policy: RELAXED }
-  StrictReview: { trigger: DEFAULT,                          write_system_files: DENY,  r001_policy: STRICT }
-```
-
-**Fast Dev 模式代碼交付鐵律**：
-1. **R-001 放寬範疇**：僅免除「預先貼出文字方案摘要並等待 confirm」之流程。
-2. **結構完整性不可讓步**：F-001 完整標頭、F-003 三反引號包裹、F-005 EOF、F-008 章節/模組完整性。
-3. **討論期非正式標記**：DISCUSS 階段輸出供試驗代碼，MUST 標註 `[非正式交付]`。
-
-**異常標籤 Fallback**：未知領域標籤 → 降級 `Strict Review Sandbox`，R-014 第五行輸出警示。
 
 ---
 
@@ -438,7 +393,7 @@ delta_summary:
   unrecorded_projects: [{code: status}]
 next_pointer:
   required_pack: SP.md
-  startup_command: "[身份: {domain}]"
+  startup_command: "[角色: 系統架構師]"
 # ==============================
 ```
 
@@ -476,7 +431,7 @@ next_pointer:
 | 項 | 動作 |
 |---|---|
 | project | 重置為 null |
-| fork | 重置為 Default |
+| role | 重置為 Architect |
 | context | 凍結（保留但不帶入下次） |
 | 對話紀錄 | 不刪除 |
 | 紀錄更新 | 已於 §5.1 前置完成 |
@@ -502,9 +457,9 @@ next_pointer:
 - 觸發：`[轉交模式]`／「提供轉交方案」。
 - 事件：`E_TRANSFER_MODE`。
 - Guard：無審查意圖。含「審查／檢查／診斷」時不切角色，改依本節與 §三 轉交對抗者或審判者。
-- 動作：Role→體系開發與結構師；輸出單一 Code Block；Code Block 正上方獨立標註 `[轉交模式 - 非正式交付]`。
+- 動作：Role→系統架構師；輸出單一 Code Block；Code Block 正上方獨立標註 `[轉交模式 - 非正式交付]`。
 - 輸出結構四要件：頂部隔離／標籤聲明／單一收納／語法與邊界防呆。
-- 三角色指名：`[角色：體系開發與結構師]`、`[角色：挑戰方案對抗者]`、`[角色：合規審判者]`。
+- 三角色指名：`[角色：系統架構師]`、`[角色：挑戰方案對抗者]`、`[角色：合規審判者]`。
 
 ---
 
@@ -517,6 +472,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792719600
-W: ai-system-20261022-009#1
+V: 1792900015
+W: ai-system-20261024-011#27
 ═══ */
