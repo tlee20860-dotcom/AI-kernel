@@ -141,8 +141,8 @@ pre_condition_guard:
 | `E_STALE_PACKAGE` | 同包重傳，Version 較舊 |
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
-| `E_ROLE_SWITCH_REQUEST` | `[授權切換：{目標角色}]` |
 | `E_USER_CONFIRM_DELIVER` | `方案已定案可交付` |
+| `E_USER_CONTINUE_DELIVER` | `[繼續交付]` |
 | `E_USER_DESTRUCTIVE_OP` | `[授權執行破壞性操作]` |
 | `E_USER_GLOBAL_BATCH` | `[授權全域批次修改]` |
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
@@ -157,7 +157,6 @@ pre_condition_guard:
 >   if role != Architect → 維持原 role（外部角色不經 FSM）
 >   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Architect
 >   if e == E_START_DELIVERY ∧ 使用者明確下令 → Architect
->   if e == E_ROLE_SWITCH_REQUEST → 切換為外部目標角色（僅限轉交，Ken 唯一有權發出）
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
@@ -178,7 +177,6 @@ fsm:
     - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: WAIT_CONFIRM }
     - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
     - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
-    - { id: T14, from: ANY,     event: E_ROLE_SWITCH_REQUEST, guard: "ken_authorized", to: SAME }
     # 優先級 3：萬用（仍屬 transitions）
     - { id: T09, from: ANY, event: E_CI_FAIL,       guard: "user_reported_failure", to: DISCUSS }
     - { id: T10, from: ANY, event: E_HOT_UPDATE,    guard: "incoming.version > current.version",  to: SAME }
@@ -206,7 +204,7 @@ fsm:
 | I-07 | WAIT_CONFIRM 未得映射前不切話題；提問／新任務優先除外。 |
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
-| I-10 | 未收到 Ken 的 `方案已定案可交付`，不得進入 STATE_DELIVER 輸出檔案。 |
+| I-10 | 未收到 Ken 的 `方案已定案可交付` 或 `[繼續交付]`，不得進入 STATE_DELIVER 輸出檔案。 |
 
 ### 2.7 Fallback（D5）
 
@@ -435,6 +433,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900029
-W: ai-system-20261024-012#55
+V: 1792900045
+W: ai-system-20261024-012#64
 ═══ */
