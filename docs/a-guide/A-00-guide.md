@@ -27,6 +27,7 @@
 | `{pkg_no}-Code.md` | 專案倉庫原始碼 | 修改程式碼時 |
 | `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
 | `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
+| `25-INDEX.md` | 全庫所有實體檔案清單 | 需要全局視野時 |
 | `21-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `22-Console.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
 
@@ -83,15 +84,15 @@ boot_check:
     trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
     check:
       - "比對四檔彼此 EOF 的 V 欄"
-      - "若 20-SP-Sys 已在場，讀其索引版本欄一併比對"
+      - "若 25-INDEX 已在場，讀其版本欄一併比對"
     if_mismatch:
       action: "輸出 ⚠️ 版本不一致"
       detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
   stage_2:
     name: "核心比對"
-    trigger: "20-SP-Sys 上傳進入體系時"
+    trigger: "25-INDEX 或 20-SP-Sys 上傳進入體系時"
     check:
-      - "讀 20-SP-Sys 之索引檔案清單的 Version 欄"
+      - "讀 25-INDEX 之檔案清單的 Version 欄"
       - "比對四檔 EOF 的 V 欄"
   limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
 ```
@@ -434,6 +435,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900074
-W: ai-system-20261024-012#116
+V: 1792900085
+W: ai-system-20261024-012#138
 ═══ */
