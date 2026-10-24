@@ -30,6 +30,7 @@
 | R-020 | 鐵律 | DSL | 破壞性操作需密語，可掃描 |
 | R-021 | 鐵律 | DSL | 全域批次需密語，可掃描 |
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
+| R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
@@ -49,7 +50,7 @@
 | F-007 | 格式 | DSL | Patch 廢除，可判 |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略詞彙，可判；含 APPEND_ONLY |
 
-**統計**：DSL 化 35 條；保留散文 5 條（R-007、R-015、S-007、F-004、R00-7.1）。
+**統計**：DSL 化 36 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -66,7 +67,7 @@
 | 混合包阻擋 | 規則 | DSL | input 包含合法與非法檔 → return reject |
 | 歸檔 | 流程 | DSL（checklist） | 門檻可列舉 |
 
-**詞表說明**：詞 34 名稱變更、詞 48~75 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
+**詞表說明**：詞 34 名稱變更、詞 48~77 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
 
 ---
 
@@ -109,6 +110,7 @@ rules_dsl:
   R-020: "IF action == DESTRUCTIVE_OPERATION THEN REQUIRE(E_USER_DESTRUCTIVE_OP_received)"
   R-021: "IF action == GLOBAL_BATCH_MODIFY THEN REQUIRE(E_USER_GLOBAL_BATCH_received)"
   R-022: "IF event == E_USER_FORCE_ABORT THEN EXECUTE(stop_all_output AND transition_to_DISCUSS)"
+  R-024: "IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade) THEN REQUIRE(deliver_refactor_map_first AND wait_for_approval) AND FORBID(code_delivery_before_approval)"
 
   # ── 事前提問（S）──
   S-001: "SHALL declare three columns: file_count, existing_rule_hit, disposition; new_addition_requires_reason"
@@ -124,7 +126,7 @@ rules_dsl:
   K-003: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(three_checks: state_set_match, term_numbers_continuous, cross_package_refs_valid)"
 
   # ── 格式規範（F）──
-  F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, author, version)"
+  F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, replace_relation, author, version)"
   F-002: "IF path_mentioned THEN REQUIRE(wrap_in_text_code_block AND relative_path AND full_filename)"
   F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang) AND IF content_contains_code_block THEN REQUIRE(outer_fence == four_backticks)"
   F-005: "IF output == FILE_DELIVERY THEN REQUIRE(EOF_TAG_and_no_duplicate_version_in_content)"
@@ -139,7 +141,7 @@ rules_dsl:
       - "EOF 存在"
       - "不檢查全文章節數與行數對比"
 
-  # ── FSM 密語事件（本次新增）──
+  # ── FSM 密語事件 ──
   E_USER_CONFIRM_DELIVER: "觸發詞 == '方案已定案可交付'"
   E_USER_CONTINUE_DELIVER: "觸發詞 == '[繼續交付]'"
   E_USER_DESTRUCTIVE_OP: "觸發詞 == '[授權執行破壞性操作]'"
@@ -212,6 +214,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792900032
-W: ai-system-20261024-012#15
+V: 1792900043
+W: ai-system-20261024-012#62
 ═══ */
