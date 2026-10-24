@@ -1,8 +1,8 @@
 # A-00 啟動引導與核心原則
 
 最後更新：ai-system-20261024-011
-Version: 1792900015
-Writer: ai-system-20261024-011#27
+Version: 1792900016
+Writer: ai-system-20261024-011#28
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄、區模型。
 
 ---
@@ -58,7 +58,7 @@ Writer: ai-system-20261024-011#27
 | `E_LOAD_PACKAGE`（四檔齊全） | FSM 啟動，由 NATIVE 進入體系 |
 | `E_EXIT_SYSTEM` | FSM 終止，回 NATIVE |
 
-- `STATE_NATIVE` 為體系外環境，不屬 $S$、不屬 δ。
+- `STATE_NATIVE` 為體系外環境，不屬 S、不屬 δ。
 
 **求值順序（四步，不得交錯）**
 
@@ -121,7 +121,7 @@ pre_condition_guard:
 
 - 每次僅索取第一個缺失檔，禁止一次列出多個上傳項。
 
-### 2.2 狀態集 $S$（5 態）
+### 2.2 狀態集 S（5 態）
 
 | 狀態 | 語意 |
 |---|---|
@@ -131,7 +131,7 @@ pre_condition_guard:
 | `STATE_CHECK` | 依 K-001／K-002 驗證；pending 補寫亦在此態 |
 | `STATE_TERMINATED` | 交接完成，FSM 終止 |
 
-### 2.3 事件集 $E$
+### 2.3 事件集 E
 
 | 事件 | 觸發 |
 |---|---|
@@ -153,11 +153,11 @@ pre_condition_guard:
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
 | `E_USER_CROSS_ZONE` | `[授權跨區操作]` |
 
-### 2.4 角色轉移函數 $\rho$
+### 2.4 角色轉移函數 ρ
 
-> 規則：$\rho$ 優先於 $\delta$ 計算；$\rho$ 結果作為 $\delta$ 之 Guard 條件。
+> 規則：ρ 優先於 δ 計算；ρ 結果作為 δ 之 Guard 條件。
 >
-> 範圍：FSM 內只有「系統架構師」一個角色（內部識別碼 `Architect`）。挑戰方案對抗者與合規審判者為外部角色，由 Ken 手動轉交，不入 $S$、不入 $\delta$、不觸發 $\rho$。
+> 範圍：FSM 內只有「系統架構師」一個角色（內部識別碼 `Architect`）。挑戰方案對抗者與合規審判者為外部角色，由 Ken 手動轉交，不入 S、不入 δ、不觸發 ρ。
 >
 > ρ(role, e):
 >   if role != Architect → 維持原 role（外部角色不經 FSM）
@@ -168,7 +168,7 @@ pre_condition_guard:
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
-### 2.5 轉移矩陣 $\delta$（YAML 全量＋fallback_handler）
+### 2.5 轉移矩陣 δ（YAML 全量＋fallback_handler）
 
 ```yaml
 fsm:
@@ -472,6 +472,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900015
-W: ai-system-20261024-011#27
+V: 1792900016
+W: ai-system-20261024-011#28
 ═══ */
