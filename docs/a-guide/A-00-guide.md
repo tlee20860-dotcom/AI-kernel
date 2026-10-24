@@ -22,12 +22,12 @@
 | `RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
 | `UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
 | `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
-| `SP.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`STATE-INDEX.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
-| `CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付檔案給合規審判者時 |
+| `SP-Sys.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
+| `SP-90.md` | `AI-General/docs/p90/` 下的 `WF-*.md` 與 `P-*.md` | 處理專案時 |
+| `90-Code.md` | 專案倉庫原始碼 | 修改程式碼時 |
+| `CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
 | `HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
-| 9*-Map／9*-P／9*-All-code | 各專案源檔 | 進入專案時 |
 | `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
-| `92-Ai-github.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
 
 **RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning` → `R-05-dsl-map`。
 
@@ -35,13 +35,13 @@
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
-- 合成物檔名格式：`{字母}P.md`；`CHK.md`、`HISTORY.md`、9*、`03-INFRA.md`、`92-Ai-github.md` 維持原名。
+- 合成物檔名格式：`{字母}P.md`；`CHK.md`、`HISTORY.md`、`SP-*`、`{pkg_no}-Code.md` 等維持原名。
 
 ### 1.3 引用規則
 
 | 方向 | 允許 | 說明 |
 |---|---|---|
-| AP → IP／RP／UP／領域包 | 指向型 | 只寫「詳見 X」，禁複述（禁止在 AP 內抄寫 IP/RP 的詳細規則） |
+| AP → IP／RP／UP／WP | 指向型 | 只寫「詳見 X」，禁複述（禁止在 AP 內抄寫 IP/RP 的詳細規則） |
 | 各包互引 | 禁止 | 各自自足 |
 
 ---
@@ -82,15 +82,15 @@ boot_check:
     trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
     check:
       - "比對四檔彼此 EOF 的 V 欄"
-      - "若 SP 已在場，讀其 STATE-INDEX 版本欄一併比對"
+      - "若 SP-Sys 已在場，讀其索引版本欄一併比對"
     if_mismatch:
       action: "輸出 ⚠️ 版本不一致"
       detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
   stage_2:
     name: "核心比對"
-    trigger: "SP 上傳進入體系時"
+    trigger: "SP-Sys 上傳進入體系時"
     check:
-      - "讀 SP 之 STATE-INDEX 檔案清單的 Version 欄"
+      - "讀 SP-Sys 之索引檔案清單的 Version 欄"
       - "比對四檔 EOF 的 V 欄"
   limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
 ```
@@ -132,7 +132,7 @@ pre_condition_guard:
 
 | 事件 | 觸發 |
 |---|---|
-| `E_START_DELIVERY` | 「開始交付」／`[轉交模式]` |
+| `E_START_DELIVERY` | 「開始交付」／`[轉交模式]`／`[繼續交付]` |
 | `E_CONFIRM_LIST` | 「確認清單」 |
 | `E_CHECK` | 「檢查」 |
 | `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
@@ -280,16 +280,16 @@ intent_unlock:
 
 ### 4.4 專案紀錄目錄規範（統一大腦模式）
 
-為確保體系與專案的記憶架構一致，所有專案的紀錄檔（`WF-*`）必須統一集中存放於體系倉庫中：
+為確保體系與專案的記憶架構一致，所有專案的紀錄檔（`WF-*`）與技術檔（`P-*`）必須統一集中存放於體系倉庫中：
 
-> `AI-General/docs/projects/{專案代碼}/records/`
+> `AI-General/docs/p{專案編號}/`
 
 | 項目 | 規範 |
 |---|---|
-| 存放路徑 | 體系倉庫下的 `docs/projects/{專案代碼}/records/` |
-| 包含檔案 | `WF-HANDOFF.md`、`WF-PROGRESS.md`、`WF-CONCLUSION.md`、`WF-STATE-INDEX.md`（自動生成），以及未來的專案歷史與歸檔檔。 |
+| 存放路徑 | 體系倉庫下的 `docs/p{專案編號}/`（例如 `docs/p90/`） |
+| 包含檔案 | `WF-HANDOFF.md`、`WF-PROGRESS.md`、`WF-CONCLUSION.md`、`WF-STATE-INDEX.md`（自動生成），以及專案技術檔 `P-*.md`。 |
 | 專案倉庫純化 | 專案倉庫（如 `AI-WEB-APP-Family`）**不得**再保留 `docs/records/` 目錄與任何紀錄檔，僅保留程式碼與技術文件。 |
-| 自動化相容 | `setup-structure.yml` 必須同步升級，以支援讀取 `docs/projects/` 下的紀錄並打包。 |
+| 自動化相容 | `setup-structure.yml` 必須同步升級，以支援讀取 `docs/p{專案編號}/` 下的紀錄並打包。 |
 
 **架構鎖定宣告（MUST）**：
 > 此目錄結構為體系核心基礎架構。AI 與所有開發者 MUST 遵守，不得任意修改、重命名或搬移。任何變更 MUST 先取得 Ken 的明確同意並輸入 `[授權架構變更]`。
@@ -435,6 +435,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900027
-W: ai-system-20261024-012#11
+V: 1792900029
+W: ai-system-20261024-012#55
 ═══ */
