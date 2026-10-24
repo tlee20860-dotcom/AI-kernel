@@ -6,7 +6,7 @@
 
 ## 零、身份與原則指向
 
-- 信仰 F-01~F-03、單一全能型態、三 AI 權責、L0~L3 階層、合成物認知：詳見 `IP.md`。
+- 信仰 F-01~F-03、單一全能型態、三 AI 權責、L0~L3 階層、合成物認知：詳見 `00-IP.md`。
 - 本檔只負責流程控制（FSM）、不變式、生命週期、出口程序。
 
 ---
@@ -17,17 +17,18 @@
 
 | 合成物 | 源檔 | 上傳時機 |
 |---|---|---|
-| `IP.md` | `AI-kernel/docs/a-guide/I-00-identity.md` | 每次 |
-| `AP.md` | `AI-kernel/docs/a-guide/A-00-guide.md` | 每次 |
-| `RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
-| `UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
-| `WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
-| `SP-Sys.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
-| `SP-90.md` | `AI-General/docs/p90/` 下的 `WF-*.md` 與 `P-*.md` | 處理專案時 |
-| `90-Code.md` | 專案倉庫原始碼 | 修改程式碼時 |
-| `CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
-| `HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
-| `03-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
+| `00-IP.md` | `AI-kernel/docs/a-guide/I-00-identity.md` | 每次 |
+| `01-AP.md` | `AI-kernel/docs/a-guide/A-00-guide.md` | 每次 |
+| `02-RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
+| `03-UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
+| `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
+| `20-SP-Sys.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
+| `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md` | 處理專案時 |
+| `{pkg_no}-Code.md` | 專案倉庫原始碼 | 修改程式碼時 |
+| `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
+| `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
+| `21-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
+| `22-Console.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
 
 **RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning` → `R-05-dsl-map`。
 
@@ -35,13 +36,13 @@
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
-- 合成物檔名格式：`{字母}P.md`；`CHK.md`、`HISTORY.md`、`SP-*`、`{pkg_no}-Code.md` 等維持原名。
+- 合成物檔名格式：`{前綴}-{名稱}.md`；`00-IP`、`01-AP` 等維持前綴分類。
 
 ### 1.3 引用規則
 
 | 方向 | 允許 | 說明 |
 |---|---|---|
-| AP → IP／RP／UP／WP | 指向型 | 只寫「詳見 X」，禁複述（禁止在 AP 內抄寫 IP/RP 的詳細規則） |
+| AP → IP／RP／UP／領域包 | 指向型 | 只寫「詳見 X」，禁複述（禁止在 AP 內抄寫 IP/RP 的詳細規則） |
 | 各包互引 | 禁止 | 各自自足 |
 
 ---
@@ -82,15 +83,15 @@ boot_check:
     trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
     check:
       - "比對四檔彼此 EOF 的 V 欄"
-      - "若 SP-Sys 已在場，讀其索引版本欄一併比對"
+      - "若 20-SP-Sys 已在場，讀其索引版本欄一併比對"
     if_mismatch:
       action: "輸出 ⚠️ 版本不一致"
       detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
   stage_2:
     name: "核心比對"
-    trigger: "SP-Sys 上傳進入體系時"
+    trigger: "20-SP-Sys 上傳進入體系時"
     check:
-      - "讀 SP-Sys 之索引檔案清單的 Version 欄"
+      - "讀 20-SP-Sys 之索引檔案清單的 Version 欄"
       - "比對四檔 EOF 的 V 欄"
   limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
 ```
@@ -108,7 +109,7 @@ pre_condition_guard:
 **D2 缺包演算法（enterSystem）**
 
 > enterSystem(uploaded, inputText):
->   ORDER = [IP, AP, RP, UP]
+>   ORDER = ['00-IP', '01-AP', '02-RP', '03-UP']
 >   for name in ORDER:
 >       if name ∉ uploaded:
 >           索取單一缺失檔 name；停留 NATIVE；return
@@ -353,7 +354,7 @@ delta_summary:
   open_issues:         [{id: summary}]
   unrecorded_projects: [{code: status}]
 next_pointer:
-  required_pack: SP.md
+  required_pack: 20-SP-Sys.md
   startup_command: "[角色: 系統架構師]"
 # ==============================
 ```
@@ -433,6 +434,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900045
-W: ai-system-20261024-012#64
+V: 1792900074
+W: ai-system-20261024-012#116
 ═══ */
