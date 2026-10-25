@@ -319,7 +319,7 @@ intent_unlock:
 >   if affected == ∅：
 >       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
 >   else：
->       §5.2 體系紀錄更新（若含 SYSTEM）
+>       §5.2 體系紀錄更新（若含 SYSTEM / GENERAL）
 >       §5.5／§5.6 專案紀錄更新（若含 PROJECT）
 >       §5.4 STATE_SEAL
 >       §5.7 重置 → 結束
@@ -328,7 +328,7 @@ intent_unlock:
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 體系紀錄更新（八檔，含 ARCHIVE 與 VERSIONS）
+### 5.2 紀錄更新清單（九檔，含 ARCHIVE 與 VERSIONS）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
@@ -340,6 +340,7 @@ intent_unlock:
 | 6 | `STATE-INDEX.md` | 由 `setup-structure.yml` 自動生成 | 自動 |
 | 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
 | 8 | `SYSTEM-VERSIONS.md` | 記錄本次對話發布的版本（以 `dialog_id` 去重，重複發布覆蓋舊資料） | APPEND_ONLY (覆蓋) |
+| 9 | `GENERAL-CONCLUSION.md` | 通用決策紀錄（`G-xxx`） | APPEND_ONLY |
 
 - 禁止使用「略」字或省略內容。
 
@@ -364,6 +365,7 @@ ssot:
   archive:    AI-General/docs/records/SYSTEM-ARCHIVE.md      @ V: {v}
   versions:   AI-General/docs/records/SYSTEM-VERSIONS.md     @ V: {v}
   index:      AI-General/docs/records/STATE-INDEX.md         @ V: {v}
+  general:    AI-General/docs/records/GENERAL-CONCLUSION.md  @ V: {v}
 delta_summary:
   files_affected:      [{path}]
   decisions_added:     { range: [D-xxx, D-yyy], count: N }
@@ -396,10 +398,11 @@ next_pointer:
 >   for path in 交付清單：
 >       if path ∈ docs/{a-guide,r-rules,u-profile,skills,review} → affected += SYSTEM
 >       elif path ∈ 專案 P 之源檔 → affected += PROJECT(P)
+>       elif dialogue_id 前綴為 general 且產生了決策 (G-xxx) → affected += GENERAL
 
 | 規則 | 內容 |
 |---|---|
-| 順序 | SYSTEM 先，PROJECT 依交付清單出現序 |
+| 順序 | SYSTEM 先，PROJECT 依交付清單出現序，最後為 GENERAL |
 | 混合狀態 | 逐專案判定：有紀錄節→更新；無→標 MISSING |
 | 提問 | 缺者合併一次提問，僅列缺者 |
 | 不阻擋 | 缺紀錄不阻擋整體結束 |
@@ -455,6 +458,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900128
-W: ai-system-20261024-013#1
+V: 1792900132
+W: ai-system-20261024-013#2
 ═══ */
