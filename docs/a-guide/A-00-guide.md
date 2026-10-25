@@ -78,7 +78,7 @@ state_anchor:
   rule_3: "降級門檻：僅 E_EXIT_SYSTEM 或四檔缺失可降 NATIVE；解釋規則不構成降級理由"
 ```
 
-**boot_check（開場版本比對，兩階段）**
+**boot_check（開場版本比對與會話鎖）**
 
 ```yaml
 boot_check:
@@ -91,6 +91,9 @@ boot_check:
     if_mismatch:
       action: "輸出 ⚠️ 版本不一致"
       detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
+    on_success:
+      action: "建立會話鎖（session_lock）"
+      detail: "鎖定當下四檔之 V 欄位，並輸出：『📌 當前體系版本：{從 HANDOFF 讀取}（已建立會話鎖）』"
   stage_2:
     name: "核心比對"
     trigger: "25-INDEX 或 20-SP-Sys 上傳進入體系時"
@@ -143,8 +146,7 @@ pre_condition_guard:
 | `E_CHECK` | 「檢查」 |
 | `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
 | `E_HANDOFF` | 「進入結束對話SOP流程」 |
-| `E_HOT_UPDATE` | 同包重傳，Version 較新 |
-| `E_STALE_PACKAGE` | 同包重傳，Version 較舊 |
+| `E_REJECT_PACKAGE` | 對話中途收到任何體系檔案（IP/AP/RP/UP/SP-Sys） |
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
 | `E_USER_CONFIRM_DELIVER` | `方案已落實` |
@@ -185,10 +187,9 @@ fsm:
     - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
     # 優先級 3：萬用（仍屬 transitions）
     - { id: T09, from: ANY, event: E_CI_FAIL,       guard: "user_reported_failure", to: DISCUSS }
-    - { id: T10, from: ANY, event: E_HOT_UPDATE,    guard: "incoming.version > current.version",  to: SAME }
-    - { id: T11, from: ANY, event: E_STALE_PACKAGE, guard: "incoming.version <= current.version", to: SAME }
     # 密語觸發之特權事件
     - { id: T17, from: ANY, event: E_USER_FORCE_ABORT,    guard: "always", to: DISCUSS }
+    - { id: T18, from: ANY, event: E_REJECT_PACKAGE, guard: "system_version_file_detected", to: SAME }
   fallback_handler:
     condition: "ALL_TRANSITIONS_FAILED"
     action: WARN_UNEXPECTED_EVENT
@@ -209,6 +210,7 @@ fsm:
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
 | I-10 | 未收到 Ken 的 `方案已落實` 與 `清單已確定開始交付`，不得進入 `STATE_EXECUTE` 輸出檔案。 |
+| I-11 | 會話鎖建立後，若中途收到體系檔案，MUST 移入隔離區並忽略，不得混用新舊規則。 |
 
 ### 2.7 情境模擬（FSM 防呆驗證）
 
@@ -219,6 +221,7 @@ fsm:
 | **邊看邊改** | 在 `WAIT_CONFIRM` 要求修改。 | 退回 `DISCUSS`。需重新走 `方案已落實` ➜ `清單已確定開始交付` 流程，確保 AI 不會擅自覆蓋。 |
 | **合規檢查** | 在 `DISCUSS` 或 `WAIT_CONFIRM` 輸入「檢查」。 | 進入 `CHECK`，貼出 K-001/K-002 證據後，自動退回 `DISCUSS`。 |
 | **甦醒復活** | 在 `TERMINATED` 時輸入新任務。 | 觸發 `T07b`，退回 `DISCUSS` 狀態，讀取 `STATE_SEAL` 恢復記憶。 |
+| **中途亂傳體系檔** | 在 `EXECUTE` 時上傳新的 `01-AP`。 | 觸發 `T18`，輸出「⚠️ 偵測到中途上傳體系檔案，已移入隔離區」，並維持原狀態，忽略新檔案。 |
 
 ### 2.8 Fallback（D5）
 
@@ -355,6 +358,7 @@ intent_unlock:
 # === STATE_SEAL: {dialog_id} ===
 status: TERMINATED
 resume_instruction: "若收到新指令，請重讀本區塊並轉回 STATE_DISCUSS"
+seal_version: vX.Y
 records_pending: []
 ssot:
   handoff:    AI-General/docs/records/SYSTEM-HANDOFF.md      @ V: {v}
@@ -458,6 +462,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900132
-W: ai-system-20261024-013#2
+V: 1792900136
+W: ai-system-20261024-013#5
 ═══ */
