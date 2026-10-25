@@ -3,9 +3,36 @@
 # W-03 純前端 ES Module 架構（Web App 通用）
 
 最後更新：2026-10-25
-Version: 1792901250
-Writer: webapp-20261025-001#6
+Version: 1792901600
+Writer: webapp-20261025-001#16
 用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版）
+
+---
+
+## 零、架構契約與依賴鐵律（MUST）
+
+為了避免專案重蹈 V1 時期檔案膨脹與耦合的覆轍，AI 在撰寫或修改任何 Web App 程式碼時，必須嚴格遵守以下契約。
+
+### 0.1 依賴方向（單向）
+
+允許的依賴方向只能由上往下（箭頭代表可以 import）：
+
+> `config/` ➜ `db/` ➜ `domain/` ➜ `ui/` ➜ `pages/`
+
+### 0.2 架構契約表
+
+| 編號 | Level | Trigger | Requirement | Counter-example（AI 的常見偷懶行為） |
+|---|---|---|---|---|
+| W03-R01 | **MUST NOT** | 撰寫或修改 `ui/*.js` | 禁止 import `domain/`、`db/`、`pages/`、`lib/`。UI 層只能依賴 `config/` 與 `ui/` 內部的其他檔案。 | 在 `ui/table.js` 裡面 import `lib/expense-modal.js` 來處理特殊按鈕；在 `ui/form.js` 直接引入 `db/write.js` 寫入資料。 |
+| W03-R02 | **MUST NOT** | 撰寫或修改 `domain/*.js` | 禁止 import `ui/`、`pages/`。領域層只能依賴 `config/`、`db/`。 | 在 `domain/insurance.js` 裡面操作 DOM（如 `document.getElementById`）；在 `domain/settlement.js` 呼叫 `ui/toast.js` 顯示提示。 |
+| W03-R03 | **MUST NOT** | 撰寫或修改 `pages/*.js` | 禁止 import 其他 `pages/*.js`。頁面之間不得互相依賴。 | 在 `pages/input-center.js` 裡面 import `pages/dashboard.js` 的函式來共用變數。 |
+| W03-R04 | **MUST** | 涉及業務計算、金額、狀態轉換 | 必須寫在 `domain/` 的純函式中，禁止在 `pages/` 或 `ui/` 中直接寫複雜的 `for` 迴圈或 `reduce` 進行計算。 | 在 `pages/settlements.js` 裡面直接寫 `const total = list.reduce((s, r) => s + r.amount, 0)` 來算總額（應呼叫 `domain/settlement.js` 的函式）。 |
+| W03-R05 | **MUST** | 新增實體表單或列表 | 必須呼叫 `ui/form.js` 的 `createForm()` 與 `ui/table.js` 的 `renderTable()`，禁止手寫 `<form>` 或 `<table>` HTML。 | 在 `pages/input-center.js` 直接寫死一段 `<form><input...></form>` HTML 標籤。 |
+| W03-R06 | **MUST** | 撰寫涉及資料庫的頁面 | 只能透過 `db/read.js`（讀）、`db/write.js`（寫）或 `domain/api-client.js`（打 API）操作資料，禁止直接引入 Firebase SDK 的 `ref`, `set` 等。 | 在 `pages/portfolio.js` 直接 `import { ref, set } from 'https://...firebase...'` 並寫入資料。 |
+
+### 0.3 交付前自檢清單（AI MUST 遵守）
+
+AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句，確認沒有違反 `W03-R01` 至 `W03-R06`。若有違反，必須重構後才可輸出，不得以「為了方便」為由妥協。
 
 ---
 
@@ -13,11 +40,12 @@ Writer: webapp-20261025-001#6
 
 | 層 | 職責 | 目錄 |
 |---|---|---|
+| 設定層 | 常數、狀態、設定檔 | `config/` |
 | 資料層 | Firebase RTDB 讀寫與監聽 | `db/`（read / write）、`config/firebase.js` |
 | 領域層 | 業務邏輯（純函式）與 API 呼叫 | `domain/` |
-| 路由層 | SPA 路由分派與啟動 | `engine/` |
 | 呈現層 | 頁面模組與 UI 元件 | `pages/`、`ui/` |
-| 設定層 | 常數、狀態、設定檔 | `config/` |
+| 路由層 | SPA 路由分派與啟動 | `engine/` |
+| 工具層 | 通用輔助（無狀態） | `lib/`（需嚴格審查，避免濫用） |
 
 **資料流（V2）**：
 
@@ -153,6 +181,6 @@ export default {
 
 /* ═══ EOF ═══
 F: W-03-esmodule.md
-V: 1792901250
-W: webapp-20261025-001#6
+V: 1792901600
+W: webapp-20261025-001#16
 ═══ */
