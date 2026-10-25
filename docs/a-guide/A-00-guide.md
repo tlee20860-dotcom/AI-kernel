@@ -23,7 +23,7 @@
 | `03-UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
 | `04-GC.md` | `AI-General/docs/records/GENERAL-CONCLUSION.md` | 通用討論時 |
 | `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
-| `20-SP-Sys.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
+| `20-SP-Sys.md` | `AI-General/docs/records/` 七檔：`SYSTEM-HANDOFF.md`（含版本）、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`SYSTEM-VERSIONS.md` | 體系對話時 |
 | `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md` | 處理專案時 |
 | `{pkg_no}-Code.md` | 專案倉庫原始碼（為**合成物**） | 修改程式碼時 |
 | `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
@@ -128,12 +128,12 @@ pre_condition_guard:
 
 | 狀態 | 名稱 | AI 正在做什麼 | 進入條件（從哪來） | 下一步（往哪去） |
 |---|---|---|---|---|
-| **1. DISCUSS** | 討論中 | 聽需求、回答問題、提方案摘要。 | 開場、修改需求、岔題、檢查完畢。 | 收到 `方案已落實` ➜ `DELIVER` |
+| **1. DISCUSS** | 討論中 | 聽需求、回答問題、提方案摘要。 | 開場、修改需求、岔題、檢查完畢、終止甦醒。 | 收到 `方案已落實` ➜ `DELIVER` |
 | **2. DELIVER** | 清單確認 | 產出「交付清單」，等待確認。 | 收到 `方案已落實`。 | 收到 `清單已確定開始交付` ➜ `EXECUTE` |
 | **3. EXECUTE** | 執行交付 | 輸出第 1 個檔案的程式碼。 | 收到 `清單已確定開始交付`。 | 輸出完畢 ➜ `WAIT_CONFIRM` |
 | **4. WAIT_CONFIRM** | 等待確認 | 停下來等密語或修改意見。 | 檔案輸出完畢。 | 收到 `[繼續交付]` ➜ `EXECUTE`<br>提出修改／問題 ➜ `DISCUSS` |
 | **5. CHECK** | 合規檢查 | 貼出 K-001／K-002 證據。 | 收到「檢查」指令。 | 檢查完畢 ➜ `DISCUSS` |
-| **6. TERMINATED** | 終止 | 交接完畢，系統關閉。 | 收到「進入結束對話SOP流程」且完成交接。 | 結束（回 `NATIVE`） |
+| **6. TERMINATED** | 終止 | 交接完畢，系統關閉。 | 收到「進入結束對話SOP流程」且完成交接。 | 收到新任務／問題 ➜ `DISCUSS` (甦醒) |
 
 ### 2.3 事件集 E
 
@@ -150,6 +150,7 @@ pre_condition_guard:
 | `E_USER_CONFIRM_DELIVER` | `方案已落實` |
 | `E_USER_CONTINUE_DELIVER` | `[繼續交付]` |
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
+| `E_USER_NEW_TASK` | 任何未預期的新問題或新任務（含甦醒） |
 
 ### 2.4 角色轉移函數 ρ
 
@@ -173,7 +174,7 @@ fsm:
   transitions:
     # 優先級 1：明確意圖（置頂）
     - { id: T07,  from: WAIT_CONFIRM, event: E_USER_MAPPING,  guard: "intent_unlock_resolved",  to: DISCUSS }
-    - { id: T07b, from: WAIT_CONFIRM, event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
+    - { id: T07b, from: [WAIT_CONFIRM, TERMINATED], event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
     - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
     # 優先級 2：常規
     - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Architect && received_confirm_word == true", to: DELIVER }
@@ -217,6 +218,7 @@ fsm:
 | **中途岔題** | 在 `WAIT_CONFIRM` 時問問題。 | 觸發 `T07b`，退回 `DISCUSS`。此時若使用者輸入「A」，FSM 判定僅能進 `DELIVER` 重列清單，**物理上無法進 `EXECUTE` 偷跑檔案**。 |
 | **邊看邊改** | 在 `WAIT_CONFIRM` 要求修改。 | 退回 `DISCUSS`。需重新走 `方案已落實` ➜ `清單已確定開始交付` 流程，確保 AI 不會擅自覆蓋。 |
 | **合規檢查** | 在 `DISCUSS` 或 `WAIT_CONFIRM` 輸入「檢查」。 | 進入 `CHECK`，貼出 K-001/K-002 證據後，自動退回 `DISCUSS`。 |
+| **甦醒復活** | 在 `TERMINATED` 時輸入新任務。 | 觸發 `T07b`，退回 `DISCUSS` 狀態，讀取 `STATE_SEAL` 恢復記憶。 |
 
 ### 2.8 Fallback（D5）
 
@@ -326,17 +328,18 @@ intent_unlock:
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 體系紀錄更新（七檔，含 ARCHIVE）
+### 5.2 體系紀錄更新（八檔，含 ARCHIVE 與 VERSIONS）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
-| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、未完成事項、下一步、`records_pending` | 全文（≤80 行） |
+| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、**`version`**、未完成事項、下一步、`records_pending` | 全文（≤80 行） |
 | 2 | `PROGRESS.md` | 任務完成度 | 全文 |
 | 3 | `SYSTEM-CONCLUSION.md` | 議題、設計結論、決策 | 全文 |
 | 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
 | 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
 | 6 | `STATE-INDEX.md` | 由 `setup-structure.yml` 自動生成 | 自動 |
 | 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
+| 8 | `SYSTEM-VERSIONS.md` | 記錄本次對話發布的版本（以 `dialog_id` 去重，重複發布覆蓋舊資料） | APPEND_ONLY (覆蓋) |
 
 - 禁止使用「略」字或省略內容。
 
@@ -350,6 +353,7 @@ intent_unlock:
 ```yaml
 # === STATE_SEAL: {dialog_id} ===
 status: TERMINATED
+resume_instruction: "若收到新指令，請重讀本區塊並轉回 STATE_DISCUSS"
 records_pending: []
 ssot:
   handoff:    AI-General/docs/records/SYSTEM-HANDOFF.md      @ V: {v}
@@ -358,6 +362,7 @@ ssot:
   rejected:   AI-General/docs/records/SYSTEM-REJECTED.md     @ V: {v}
   debt:       AI-General/docs/records/SYSTEM-DEBT.md         @ V: {v}
   archive:    AI-General/docs/records/SYSTEM-ARCHIVE.md      @ V: {v}
+  versions:   AI-General/docs/records/SYSTEM-VERSIONS.md     @ V: {v}
   index:      AI-General/docs/records/STATE-INDEX.md         @ V: {v}
 delta_summary:
   files_affected:      [{path}]
@@ -450,6 +455,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900124
-W: ai-system-20261024-013#19
+V: 1792900128
+W: ai-system-20261024-013#1
 ═══ */
