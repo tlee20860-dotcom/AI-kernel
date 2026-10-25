@@ -24,7 +24,7 @@
 | `04-GC.md` | `AI-General/docs/records/GENERAL-CONCLUSION.md` | 通用討論時 |
 | `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
 | `20-SP-Sys.md` | `AI-General/docs/records/` 七檔：`SYSTEM-HANDOFF.md`（含版本）、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`SYSTEM-VERSIONS.md` | 體系對話時 |
-| `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md` | 處理專案時 |
+| `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md`。生成時，檔頭會自動注入「體系版本」與「專案狀態版本（WF-HANDOFF 的 V 欄）」。 | 處理專案時 |
 | `{pkg_no}-Code.md` | 專案倉庫原始碼（為**合成物**） | 修改程式碼時 |
 | `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
 | `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
@@ -146,9 +146,9 @@ pre_condition_guard:
 | `E_CHECK` | 「檢查」 |
 | `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
 | `E_HANDOFF` | 「進入結束對話SOP流程」 |
+| `E_CONFIRM_VERSION` | 「體系版本號確定修改」 |
 | `E_REJECT_PACKAGE` | 對話中途收到任何體系檔案（IP/AP/RP/UP/SP-Sys） |
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
-| `E_BRAIN_RESET` | 「大腦重整」 |
 | `E_USER_CONFIRM_DELIVER` | `方案已落實` |
 | `E_USER_CONTINUE_DELIVER` | `[繼續交付]` |
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
@@ -261,7 +261,6 @@ intent_unlock:
 | 「方案已落實」 | R-001、F-001、F-005、F-008 |
 | 「清單已確定開始交付」 | R-001、F-001、F-005、F-008 |
 | 「檢查」 | R-001、R-009、K-001、K-003 |
-| 「大腦重整」 | R-001、R-009、R-012 |
 
 - 錨點觸發時，AI MUST 貼出對應契約 ID 與條文摘要（非全文）。
 - 事件以外不貼錨點。
@@ -319,6 +318,8 @@ intent_unlock:
 
 > on E_HANDOFF（「進入結束對話SOP流程」）：
 >   affected = deriveAffected(交付清單)
+>   MUST 先輸出當前體系版本與建議發布版本（如：v2 ➜ v3），並等待 Ken 輸入 `體系版本號確定修改`。
+>   收到密語後，才更新 HANDOFF 版本，並執行下方流程：
 >   if affected == ∅：
 >       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
 >   else：
@@ -331,7 +332,7 @@ intent_unlock:
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 紀錄更新清單（九檔，含 ARCHIVE 與 VERSIONS）
+### 5.2 紀錄更新清單（八檔，含 ARCHIVE 與 VERSIONS）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
@@ -342,10 +343,10 @@ intent_unlock:
 | 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
 | 6 | `STATE-INDEX.md` | 由 `setup-structure.yml` 自動生成 | 自動 |
 | 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
-| 8 | `SYSTEM-VERSIONS.md` | 記錄本次對話發布的版本（以 `dialog_id` 去重，重複發布覆蓋舊資料） | APPEND_ONLY (覆蓋) |
-| 9 | `GENERAL-CONCLUSION.md` | 通用決策紀錄（`G-xxx`） | APPEND_ONLY |
+| 8 | `GENERAL-CONCLUSION.md` | 通用決策紀錄（`G-xxx`） | APPEND_ONLY |
 
 - 禁止使用「略」字或省略內容。
+- 版本遞增規則：收到 `體系版本號確定修改` 時，AI 依本次變更等級（主版本／次版本／修訂）自行遞增 `version`。
 
 ### 5.3 STATE-INDEX 提醒
 
@@ -367,7 +368,6 @@ ssot:
   rejected:   AI-General/docs/records/SYSTEM-REJECTED.md     @ V: {v}
   debt:       AI-General/docs/records/SYSTEM-DEBT.md         @ V: {v}
   archive:    AI-General/docs/records/SYSTEM-ARCHIVE.md      @ V: {v}
-  versions:   AI-General/docs/records/SYSTEM-VERSIONS.md     @ V: {v}
   index:      AI-General/docs/records/STATE-INDEX.md         @ V: {v}
   general:    AI-General/docs/records/GENERAL-CONCLUSION.md  @ V: {v}
 delta_summary:
@@ -462,6 +462,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900136
-W: ai-system-20261024-013#5
+V: 1792900140
+W: ai-system-20261024-013#1
 ═══ */
