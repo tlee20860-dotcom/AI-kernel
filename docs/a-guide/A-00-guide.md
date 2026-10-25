@@ -137,7 +137,7 @@ pre_condition_guard:
 
 | 事件 | 觸發 |
 |---|---|
-| `E_START_DELIVERY` | 「開始交付」／`[轉交模式]`／`[繼續交付]` |
+| `E_START_DELIVERY` | `[轉交模式]`／`[繼續交付]` 觸發 |
 | `E_CONFIRM_LIST` | 「清單已確定開始交付」 |
 | `E_CHECK` | 「檢查」 |
 | `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
@@ -159,7 +159,7 @@ pre_condition_guard:
 > ρ(role, e):
 >   if role != Architect → 維持原 role（外部角色不經 FSM）
 >   if e == E_TRANSFER_MODE ∧ 輸入無「審查/檢查/診斷」→ Architect
->   if e == E_START_DELIVERY ∧ 使用者明確下令 → Architect
+>   if e == E_USER_CONFIRM_DELIVER ∧ 使用者明確下令 → Architect
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
@@ -242,7 +242,8 @@ intent_unlock:
 
 | 事件 | 自動帶出契約 ID |
 |---|---|
-| 「開始交付」 | R-001、F-001、F-005、F-008 |
+| 「方案已落實」 | R-001、F-001、F-005、F-008 |
+| 「清單已確定開始交付」 | R-001、F-001、F-005、F-008 |
 | 「檢查」 | R-001、R-009、K-001、K-003 |
 | 「大腦重整」 | R-001、R-009、R-012 |
 
@@ -267,8 +268,7 @@ intent_unlock:
 | # | 檔案 | 職責 |
 |---|---|---|
 | 1 | `meta.json` | 供 `sync-repos.yml` 探測 |
-| 2 | `.github/workflows/apply-patch.yml` | Patch 呼叫器 |
-| 3 | `.github/workflows/notify.yml` | 通知 `AI-infra` 重新打包 |
+| 2 | `.github/workflows/notify.yml` | 通知 `AI-infra` 重新打包 |
 
 ### 4.3 `meta.json` 模板
 
@@ -439,6 +439,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900101
-W: ai-system-20261024-013#2
+V: 1792900113
+W: ai-system-20261024-013#17
 ═══ */
