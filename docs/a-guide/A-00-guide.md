@@ -282,8 +282,8 @@ intent_unlock:
 
 | # | 檔案 | 職責 |
 |---|---|---|
-| 1 | `meta.json` | 供 `sync-repos.yml` 探測 |
-| 2 | `.github/workflows/notify.yml` | 通知 `AI-infra` 重新打包 |
+| 1 | `meta.json` | **第一優先建立**。供 `sync-repos.yml` 探測 `domain` 與 `pkg_no`。若缺此檔，專案將不會被自動化打包。 |
+| 2 | `.github/workflows/notify.yml` | 通知 `AI-infra` 重新打包。**必須包含 `CROSS_REPO_PAT` 權限**，否則無法觸發跨倉庫 Action。 |
 
 ### 4.3 `meta.json` 模板
 
@@ -310,6 +310,11 @@ intent_unlock:
 **架構鎖定宣告（MUST）**：
 > 此目錄結構為體系核心基礎架構。AI 與所有開發者 MUST 遵守，不得任意修改、重命名或搬移。任何變更 MUST 先取得 Ken 的明確同意並以對話紀錄為證。
 
+### 4.5 專案腳本防硬編碼（R-025 落實）
+
+專案端的自動化腳本（如 `notify.yml`），**MUST NOT 寫死倉庫路徑**（如 `tlee20860-dotcom/AI-infra`）。
+必須使用 GitHub Secrets 或環境變數來讀取，例如 `${{ secrets.AI_INFRA_REPO }}`，以避免未來倉庫轉移或改名時全面失效。
+
 ---
 
 ## 五、結束對話與交接 SOP
@@ -318,7 +323,7 @@ intent_unlock:
 
 > on E_HANDOFF（「進入結束對話SOP流程」）：
 >   affected = deriveAffected(交付清單)
->   MUST 先輸出當前體系版本與建議發布版本（如：v2 ➜ v3），並等待 Ken 輸入 `體系版本號確定修改`。
+>   MUST 先輸出當前體系版本與建議發布版本（如：SV03 ➜ SV04），並等待 Ken 輸入 `體系版本號確定修改`。
 >   收到密語後，才更新 HANDOFF 版本，並執行下方流程：
 >   if affected == ∅：
 >       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
@@ -359,7 +364,7 @@ intent_unlock:
 # === STATE_SEAL: {dialog_id} ===
 status: TERMINATED
 resume_instruction: "若收到新指令，請重讀本區塊並轉回 STATE_DISCUSS"
-seal_version: vX.Y
+seal_version: SVXX
 records_pending: []
 ssot:
   handoff:    AI-General/docs/records/SYSTEM-HANDOFF.md      @ V: {v}
@@ -462,6 +467,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900140
-W: ai-system-20261024-013#1
+V: 1792900153
+W: ai-system-20261024-013#2
 ═══ */
