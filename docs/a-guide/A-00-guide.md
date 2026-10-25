@@ -21,15 +21,18 @@
 | `01-AP.md` | `AI-kernel/docs/a-guide/A-00-guide.md` | 每次 |
 | `02-RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
 | `03-UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
+| `04-GC.md` | `AI-General/docs/records/GENERAL-CONCLUSION.md` | 通用討論時 |
 | `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
 | `20-SP-Sys.md` | `AI-General/docs/records/` 六檔：`SYSTEM-HANDOFF.md`、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
 | `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md` | 處理專案時 |
-| `{pkg_no}-Code.md` | 專案倉庫原始碼 | 修改程式碼時 |
+| `{pkg_no}-Code.md` | 專案倉庫原始碼（為**合成物**） | 修改程式碼時 |
 | `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
 | `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
 | `25-INDEX.md` | 全庫所有實體檔案清單 | 需要全局視野時 |
 | `21-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `22-Console.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
+
+**專案代碼包認知**：`{pkg_no}-Code.md` 為專案程式碼之合成物。AI 收到的是合併後的完整包；AI MUST 在此合成物中定位目標源碼進行修改，交付時僅輸出該目標檔之完整內容，由使用者手動貼回源碼倉庫。不得假設使用者是單檔上傳。
 
 **RP.md 內部順序**：`R-03-terms` → `R-00-rules` → `R-02-patterns` → `R-04-learning` → `R-05-dsl-map`。
 
@@ -135,18 +138,16 @@ pre_condition_guard:
 | 事件 | 觸發 |
 |---|---|
 | `E_START_DELIVERY` | 「開始交付」／`[轉交模式]`／`[繼續交付]` |
-| `E_CONFIRM_LIST` | 「確認清單」 |
+| `E_CONFIRM_LIST` | 「清單已確定開始交付」 |
 | `E_CHECK` | 「檢查」 |
 | `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
-| `E_HANDOFF` | 「結束對話」／「準備轉移」 |
+| `E_HANDOFF` | 「進入結束對話SOP流程」 |
 | `E_HOT_UPDATE` | 同包重傳，Version 較新 |
 | `E_STALE_PACKAGE` | 同包重傳，Version 較舊 |
 | `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
 | `E_BRAIN_RESET` | 「大腦重整」 |
-| `E_USER_CONFIRM_DELIVER` | `方案已定案可交付` |
+| `E_USER_CONFIRM_DELIVER` | `方案已落實` |
 | `E_USER_CONTINUE_DELIVER` | `[繼續交付]` |
-| `E_USER_DESTRUCTIVE_OP` | `[授權執行破壞性操作]` |
-| `E_USER_GLOBAL_BATCH` | `[授權全域批次修改]` |
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
 
 ### 2.4 角色轉移函數 ρ
@@ -184,8 +185,6 @@ fsm:
     - { id: T10, from: ANY, event: E_HOT_UPDATE,    guard: "incoming.version > current.version",  to: SAME }
     - { id: T11, from: ANY, event: E_STALE_PACKAGE, guard: "incoming.version <= current.version", to: SAME }
     # 密語觸發之特權事件
-    - { id: T15, from: ANY, event: E_USER_DESTRUCTIVE_OP, guard: "always", to: SAME }
-    - { id: T16, from: ANY, event: E_USER_GLOBAL_BATCH,   guard: "always", to: SAME }
     - { id: T17, from: ANY, event: E_USER_FORCE_ABORT,    guard: "always", to: DISCUSS }
   fallback_handler:
     condition: "ALL_TRANSITIONS_FAILED"
@@ -206,7 +205,7 @@ fsm:
 | I-07 | WAIT_CONFIRM 未得映射前不切話題；提問／新任務優先除外。 |
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
-| I-10 | 未收到 Ken 的 `方案已定案可交付` 或 `[繼續交付]`，不得進入 STATE_DELIVER 輸出檔案。 |
+| I-10 | 未收到 Ken 的 `方案已落實` 與 `清單已確定開始交付`，不得進入交付檔案。 |
 
 ### 2.7 Fallback（D5）
 
@@ -227,13 +226,15 @@ intent_unlock:
     - P4: "提問／新任務優先（T07b），末尾附選項"
 ```
 
-### 2.9 對話編號生成演算法
+### 2.9 對話編號生成與轉換
 
-格式為 `{專案代碼}-{YYYYMMDD}-{序號}`。
-1. **專案代碼**：讀取專案根目錄 `meta.json` 的 `code` 欄位。
-2. **日期**：當前 HKT 日期。
-3. **序號**：同日同專案，從 `001` 起算；若跨日，則重置為 `001`。
-4. **例外**：若無法讀取 `meta.json` 或未載入專案包，AI MUST 依 R-004 停止並向使用者索取，不得留空或瞎猜。
+格式為 `{前綴}-{YYYYMMDD}-{序號}`。為解決統一大腦下「先四檔、後專案」的盲區，生成機制如下：
+
+1. **開場階段（未定案）**：僅載入四檔時，對話編號一律預設為 `general-{YYYYMMDD}-{序號}`（例如 `general-20261024-001`）。此為流水式，需依靠 `25-INDEX` 或對話上下文推算，若無法確認則給 `001` 並備註。這表示處於尚未確認任務性質的純討論狀態。
+2. **確認體系任務**：若 Ken 明確指示維護體系，Header 維持 `general` 或視情況切換為 `ai-system-{YYYYMMDD}-{序號}`。
+3. **確認專案任務**：若 Ken 指示處理專案或載入專案包，切換為 `{專案代碼}-{YYYYMMDD}-{序號}`（專案代碼讀取自 `meta.json` 的 `code` 欄位）。
+4. **凍結機制**：一旦生成正式前綴（體系或專案），該對話 Header 後續直到結束都不再更改。
+5. **例外**：若無法讀取 `meta.json` 或未載入專案包，AI MUST 依 R-004 停止並向使用者索取，不得留空或瞎猜。
 
 ---
 
@@ -289,10 +290,10 @@ intent_unlock:
 | 存放路徑 | 體系倉庫下的 `docs/p{專案編號}/`（例如 `docs/p90/`） |
 | 包含檔案 | `WF-HANDOFF.md`、`WF-PROGRESS.md`、`WF-CONCLUSION.md`、`WF-STATE-INDEX.md`（自動生成），以及專案技術檔 `P-*.md`。 |
 | 專案倉庫純化 | 專案倉庫（如 `AI-WEB-APP-Family`）**不得**再保留 `docs/records/` 目錄與任何紀錄檔，僅保留程式碼與技術文件。 |
-| 自動化相容 | `setup-structure.yml` 必須同步升級，以支援讀取 `docs/p{專案編號}/` 下的紀錄並打包。 |
+| 自動化相容 | 由 `setup-structure.yml` 自動讀取 `docs/p{專案編號}/` 下的紀錄並打包生成。 |
 
 **架構鎖定宣告（MUST）**：
-> 此目錄結構為體系核心基礎架構。AI 與所有開發者 MUST 遵守，不得任意修改、重命名或搬移。任何變更 MUST 先取得 Ken 的明確同意並輸入 `[授權架構變更]`。
+> 此目錄結構為體系核心基礎架構。AI 與所有開發者 MUST 遵守，不得任意修改、重命名或搬移。任何變更 MUST 先取得 Ken 的明確同意並以對話紀錄為證。
 
 ---
 
@@ -300,7 +301,7 @@ intent_unlock:
 
 ### 5.1 觸發與 Guard（含 D4、短路、pending）
 
-> on E_HANDOFF（「結束對話」／「準備轉移」）：
+> on E_HANDOFF（「進入結束對話SOP流程」）：
 >   affected = deriveAffected(交付清單)
 >   if affected == ∅：
 >       僅產出 §5.4 STATE_SEAL → §5.7 重置 → 結束
@@ -429,12 +430,15 @@ next_pointer:
 ## 七、決策即時記錄
 
 - 每項新決策，於該回覆正文末尾（錨點正上方）獨立輸出一行：
-  `D-{序號}｜{決策}｜{原因}`
-- 編號接續 `SYSTEM-CONCLUSION.md` 現有最大編號＋1，跨對話累加。
-- 若未載入 `SYSTEM-CONCLUSION.md`，輸出 `D-?｜{決策}｜{原因}` 並於 STATE_SEAL 備註「編號待補正」。
+  `{前綴}-{序號}｜{決策}｜{原因}`
+- 前綴與序號規則：
+  1. **體系決策**（在體系區）：使用 `D-{序號}`，接續 `SYSTEM-CONCLUSION.md` 現有最大編號＋1，跨對話累加。
+  2. **專案決策**（在專案區）：使用 `D-{專案編號}-{序號}`（如 `D-90-001`），並於結束時寫入該專案的 `WF-CONCLUSION.md`。
+  3. **通用決策**（純討論區）：使用 `G-{序號}`，寫入 `GENERAL-CONCLUSION.md`。
+- 若未載入對應的紀錄檔（如 `SYSTEM-CONCLUSION.md` 或 `GENERAL-CONCLUSION.md`），輸出 `D-?` 或 `G-?` 並於 STATE_SEAL 備註「編號待補正」。
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900085
-W: ai-system-20261024-012#138
+V: 1792900101
+W: ai-system-20261024-013#2
 ═══ */
