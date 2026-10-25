@@ -23,8 +23,8 @@
 
 **方案**：在體系建立標準的「專案三寶」，新專案必須包含：
 1. `meta.json`（根目錄）：標記 `domain` 與 `pkg_no`，供自動化腳本探測。
-2. `.github/workflows/apply-patch.yml`：自動套用 Patch 的呼叫器。
-3. `.github/workflows/notify.yml`：通知 `AI-infra` 重新打包的觸發器。
+2. `.github/workflows/notify.yml`：通知 `AI-infra` 重新打包的觸發器。
+*(註：原 `apply-patch.yml` 因全面廢除 Patch 模式已移除。)*
 
 **優勢**：保證新專案 100% 融入自動化體系，減少 AI 幻覺與人工遺漏。
 
@@ -47,7 +47,8 @@
 **方案**：
 1. 開場只傳核心（`AP.md` + `UP.md` + `RP.md`）。
 2. 涉及架構設計時，才傳 `R02` 模式庫。
-3. 涉及腳本修改時，才傳 `03-INFRA.md`（自動生成）。
+3. 涉及腳本修改時，才傳 `21-INFRA.md`（自動生成）。
+4. 處理專案時，只傳對應的 `{pkg_no}-SP.md` 與 `{pkg_no}-Code.md`。
 
 ---
 
@@ -74,10 +75,8 @@
 
 **優勢**：將「角色扮演」轉化為「架構約束」，確保 AI 行為穩定且可被核對，不會因為對話變長而變形。
 
----
-
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-02-patterns.md
-V: 1792575600
-W: ai-system-20261021-003#61
+V: 1792900105
+W: ai-system-20261024-013#5
 ═══ */
