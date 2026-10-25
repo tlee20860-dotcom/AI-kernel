@@ -1,9 +1,16 @@
+## 📄 AI-kernel/docs/skills/W/W-00-startup.md
+
 # W-00 領域啟動卡（Web App）
 
-最後更新：2026-10-21
-Version: 1792581001
-Writer: ai-system-20261021-004#1
+最後更新：2026-10-25
+Version: 1792901620
+Writer: webapp-20261025-001#18
 用途：Web App 領域的啟動卡（工具鏈 / 慣例 / 載入方式）
+
+---
+
+> **【強制規則宣告】**
+> 本 W 包（W-00 ~ W-07）為 Web App 領域之**強制性規則（Domain Rules）**。AI 處理所有 Web App 相關任務時，**MUST** 遵守本包規範。違反 W 包之架構契約（如 W-03）或 SOP，視同違反體系鐵律。
 
 ---
 
@@ -25,10 +32,10 @@ Writer: ai-system-20261021-004#1
 | 0 | W-00-startup.md（本檔） | 領域啟動卡 |
 | 1 | W-01-firebase.md | Firebase RTDB 結構原則 |
 | 2 | W-02-functions.md | Cloudflare Pages Functions 規則 |
-| 3 | W-03-esmodule.md | 純前端 ES Module 架構 |
+| 3 | W-03-esmodule.md | 純前端 ES Module 架構（**含依賴方向鐵律與架構契約**） |
 | 4 | W-04-pwa.md | PWA + Service Worker |
-| 5 | W-05-schema.md | Web App 頁面 Schema 與 UI 規範 |
-| 6 | W-06-sop.md | Web App 通用任務 SOP |
+| 5 | W-05-schema.md | Web App 頁面規範與 UI 結構 |
+| 6 | W-06-sop.md | Web App 通用任務 SOP（**含新專案零到一啟動 SOP**） |
 | 7 | W-07-errors.md | Web App 通用錯誤與防呆 |
 
 ---
@@ -63,11 +70,12 @@ Writer: ai-system-20261021-004#1
 
 | 任務 | 引用 |
 |---|---|
-| 新增頁面 | W-03 + W-05 + W-06 |
+| **新專案啟動** | W-06 §零 |
+| 新增頁面 | W-03 + W-05 + W-06 §一 |
 | 改資料結構 | W-01 |
 | 改 Functions | W-02 |
 | 改 PWA | W-04 |
-| 改 Schema | W-05 |
+| 改 Schema / UI | W-05 |
 
 ---
 
@@ -80,6 +88,7 @@ Writer: ai-system-20261021-004#1
 | 3 | 動態值用快照 | 內部讀 AppState |
 | 4 | 動態注入未清空 | 先 textContent = '' |
 | 5 | 全站結構改動未完整掃描 | 改前完整掃描 |
+| 6 | UI 層反向依賴業務層 | 嚴格遵守 W-03 依賴契約 |
 
 ---
 
@@ -106,6 +115,6 @@ Writer: ai-system-20261021-004#1
 
 /* ═══ EOF ═══
 F: W-00-startup.md
-V: 1792581001
-W: ai-system-20261021-004#1
+V: 1792901620
+W: webapp-20261025-001#18
 ═══ */
