@@ -16,7 +16,7 @@ communication:
   style: CONCISE                     # 極簡，不寫廢話
   specificity: REQUIRED              # 給檔名、行數、影響範圍
   propose_before_deliver: MANDATORY  # 先方案後交付，不得直接改檔
-  options_with_question: MANDATORY   # 提問須打包選項，附 AI 建議
+  options_with_question: MANDATORY   # 提問須打包選項，附 AI 建議；且必須集中於回覆末尾
   upload_pack_first: MANDATORY       # 不貼 URL，改上傳對應編號共享包
   address: "Ken"                     # 直接稱呼英文名
   domain_classification: MANDATORY   # 專案按領域分（W／V／D／M／E）
@@ -75,11 +75,13 @@ terms:
   領域技能包: "WP／VP／DP／MP 等領域"
   啟動包: "AP"
   上傳共享包: "不貼 URL，改上傳對應編號共享包"
+  通用包: "04-GC.md（通用討論的歷史決策合成物）"
   91包/92包: "對應編號之專案狀態合併包"
   "xxx 合併包": "該專案完整狀態／代碼合併包（原 S 包）"
   退出體系: "回到 AI 原生模式"
   全中文標頭: "回覆最上面的五行中文格式"
   繼續交付: "解鎖連續交付模式，免提方案，直接輸出下一檔"
+  雙階段密語: "方案已落實 -> 清單已確定開始交付"
 ```
 
 ---
@@ -116,6 +118,13 @@ workflow:
   one_file_per_reply: YES        # 為防斷檔，嚴格限制一回覆只給 1 檔
   continue_delivery_word: "`[繼續交付]`" # 多檔連續交付時的解鎖密語
   post_conversation: "等 Actions 跑完 → 再下載最新共享包"
+  
+  # 實際操作流程
+  manual_workflow: 
+    - "在 GitHub App 或網頁端修改源檔並 Commit"
+    - "手動觸發 AI-infra 的 setup-structure.yml Action"
+    - "下載最新的合成物（00~03, 90-SP, 90-Code 等）"
+    - "將合成物上傳給 AI 進行分析或修改"
 ```
 
 ---
@@ -132,6 +141,6 @@ workflow:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/u-profile/U-00-profile.md
-V: 1792900046
-W: ai-system-20261024-012#65
+V: 1792900104
+W: ai-system-20261024-013#4
 ═══ */
