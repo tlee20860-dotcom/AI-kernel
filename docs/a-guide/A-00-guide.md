@@ -40,7 +40,7 @@
 
 - AI MUST 以源檔為修改對象；合成物為載入產物。
 - 修改流程：改源檔 → 觸發打包 → 產生新合成物。
-- 合成物檔名格式：`{前綴}-{名稱}.md`；`00-IP`、`01-AP` 等維持前綴分類。
+- 合成物檔名格式：`{前綴}-{名稱}.md`；各合成物前綴見 §1.1。
 
 ### 1.3 引用規則
 
@@ -104,7 +104,7 @@ boot_check:
 
 ```yaml
 pre_condition_guard:
-  rule: "IF records_pending NOT EMPTY THEN BLOCK(E_START_DELIVERY) AND FORCE_STATE(CHECK)"
+  rule: "IF records_pending NOT EMPTY THEN BLOCK(E_USER_CONFIRM_DELIVER) AND FORCE_STATE(CHECK)"
   pending_source: "SYSTEM-HANDOFF.md 檔頭 'records_pending' 欄位"
   resolved_when: "補寫完成且 STATE_SEAL 的 records_pending == []"
   scope: "只擋交付，不擋討論"
@@ -113,10 +113,11 @@ pre_condition_guard:
 **D2 缺包演算法（enterSystem）**
 
 > enterSystem(uploaded, inputText):
->   ORDER = ['00-IP', '01-AP', '02-RP', '03-UP']
->   for name in ORDER:
->       if name ∉ uploaded:
->           索取單一缺失檔 name；停留 NATIVE；return
+>   ORDER = ['IP', 'AP', 'RP', 'UP']
+>   for logical_name in ORDER:
+>       filename = 解析(A-00 §1.1, logical_name)
+>       if filename ∉ uploaded:
+>           索取單一缺失檔 filename；停留 NATIVE；return
 >   啟動 FSM（E_LOAD_PACKAGE）
 >
 > 收到上傳後：重跑全盤掃描，直到四檔齊全。
@@ -137,7 +138,6 @@ pre_condition_guard:
 
 | 事件 | 觸發 |
 |---|---|
-| `E_START_DELIVERY` | `[轉交模式]`／`[繼續交付]` 觸發 |
 | `E_CONFIRM_LIST` | 「清單已確定開始交付」 |
 | `E_CHECK` | 「檢查」 |
 | `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
@@ -439,6 +439,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900113
-W: ai-system-20261024-013#17
+V: 1792900119
+W: ai-system-20261024-013#4
 ═══ */
