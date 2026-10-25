@@ -23,11 +23,11 @@
 | `03-UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
 | `04-GC.md` | `AI-General/docs/records/GENERAL-CONCLUSION.md` | 通用討論時 |
 | `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
-| `20-SP-Sys.md` | `AI-General/docs/records/` 七檔：`SYSTEM-HANDOFF.md`（含版本）、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`INDEX-Sys.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`SYSTEM-VERSIONS.md` | 體系對話時 |
+| `20-SP-Sys.md` | `AI-General/docs/records/` 五檔：`SYSTEM-HANDOFF.md`（含版本）、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
 | `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md`。生成時，檔頭會自動注入「體系版本」與「專案狀態版本（WF-HANDOFF 的 V 欄）」。 | 處理專案時 |
 | `{pkg_no}-Code.md` | 專案倉庫原始碼（為**合成物**） | 修改程式碼時 |
 | `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
-| `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`R-04-learning.md` | 查歷史時 |
+| `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`SYSTEM-ARCHIVE.md`、`R-04-learning.md` | 查歷史時 |
 | `25-INDEX.md` | 全庫所有實體檔案清單 | 需要全局視野時 |
 | `21-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `22-Console.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
@@ -346,16 +346,16 @@ intent_unlock:
 | 3 | `SYSTEM-CONCLUSION.md` | 議題、設計結論、決策 | 全文 |
 | 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
 | 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
-| 6 | `STATE-INDEX.md` | 由 `setup-structure.yml` 自動生成 | 自動 |
+| 6 | `STATE-INDEX.md` | **（已廢除）** 已由 `cleanup-legacy.yml` 刪除，不再生成；本列僅留歷史痕跡 | — |
 | 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
 | 8 | `GENERAL-CONCLUSION.md` | 通用決策紀錄（`G-xxx`） | APPEND_ONLY |
 
 - 禁止使用「略」字或省略內容。
 - 版本遞增規則：收到 `體系版本號確定修改` 時，AI 依本次變更等級（主版本／次版本／修訂）自行遞增 `version`。
 
-### 5.3 STATE-INDEX 提醒
+### 5.3 檔案索引提醒
 
-- `STATE-INDEX.md` 由 `setup-structure.yml` 自動生成，AI 不手動修改。
+- `STATE-INDEX.md` 已廢除（見 §5.2 #6）。檔案索引改由 `25-INDEX.md`（AI-Packages 生成物）承載，AI 不手動修改。
 - 交接時提醒：「請確認 `AI-infra` 最新 Action 是否成功跑完。」
 
 ### 5.4 STATE_SEAL 模板（取代長篇交接詞）
@@ -373,7 +373,6 @@ ssot:
   rejected:   AI-General/docs/records/SYSTEM-REJECTED.md     @ V: {v}
   debt:       AI-General/docs/records/SYSTEM-DEBT.md         @ V: {v}
   archive:    AI-General/docs/records/SYSTEM-ARCHIVE.md      @ V: {v}
-  index:      AI-General/docs/records/STATE-INDEX.md         @ V: {v}
   general:    AI-General/docs/records/GENERAL-CONCLUSION.md  @ V: {v}
 delta_summary:
   files_affected:      [{path}]
@@ -465,8 +464,6 @@ next_pointer:
   3. **通用決策**（純討論區）：使用 `G-{序號}`，寫入 `GENERAL-CONCLUSION.md`。
 - 若未載入對應的紀錄檔（如 `SYSTEM-CONCLUSION.md` 或 `GENERAL-CONCLUSION.md`），輸出 `D-?` 或 `G-?` 並於 STATE_SEAL 備註「編號待補正」。
 
-/* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900153
-W: ai-system-20261024-013#2
-═══ */
+V: 1792900190
+W: ai-system-20261025-001#3
