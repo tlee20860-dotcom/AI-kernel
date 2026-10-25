@@ -124,15 +124,16 @@ pre_condition_guard:
 
 - 每次僅索取第一個缺失檔，禁止一次列出多個上傳項。
 
-### 2.2 狀態集 S（5 態）
+### 2.2 狀態集 S（6 態，依生命週期排序）
 
-| 狀態 | 語意 |
-|---|---|
-| `STATE_DISCUSS` | 聽需求、提方案；禁輸出檔案內容 |
-| `STATE_DELIVER` | 列交付清單、輸出檔案 |
-| `STATE_WAIT_CONFIRM` | 交付後等待 A/B/C/D 回覆 |
-| `STATE_CHECK` | 依 K-001／K-002 驗證；pending 補寫亦在此態 |
-| `STATE_TERMINATED` | 交接完成，FSM 終止 |
+| 狀態 | 名稱 | AI 正在做什麼 | 進入條件（從哪來） | 下一步（往哪去） |
+|---|---|---|---|---|
+| **1. DISCUSS** | 討論中 | 聽需求、回答問題、提方案摘要。 | 開場、修改需求、岔題、檢查完畢。 | 收到 `方案已落實` ➜ `DELIVER` |
+| **2. DELIVER** | 清單確認 | 產出「交付清單」，等待確認。 | 收到 `方案已落實`。 | 收到 `清單已確定開始交付` ➜ `EXECUTE` |
+| **3. EXECUTE** | 執行交付 | 輸出第 1 個檔案的程式碼。 | 收到 `清單已確定開始交付`。 | 輸出完畢 ➜ `WAIT_CONFIRM` |
+| **4. WAIT_CONFIRM** | 等待確認 | 停下來等密語或修改意見。 | 檔案輸出完畢。 | 收到 `[繼續交付]` ➜ `EXECUTE`<br>提出修改／問題 ➜ `DISCUSS` |
+| **5. CHECK** | 合規檢查 | 貼出 K-001／K-002 證據。 | 收到「檢查」指令。 | 檢查完畢 ➜ `DISCUSS` |
+| **6. TERMINATED** | 終止 | 交接完畢，系統關閉。 | 收到「進入結束對話SOP流程」且完成交接。 | 結束（回 `NATIVE`） |
 
 ### 2.3 事件集 E
 
@@ -167,7 +168,7 @@ pre_condition_guard:
 
 ```yaml
 fsm:
-  state_set: [DISCUSS, DELIVER, WAIT_CONFIRM, CHECK, TERMINATED]
+  state_set: [DISCUSS, DELIVER, EXECUTE, WAIT_CONFIRM, CHECK, TERMINATED]
   evaluation_order: strict_top_down
   transitions:
     # 優先級 1：明確意圖（置頂）
@@ -176,8 +177,9 @@ fsm:
     - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
     # 優先級 2：常規
     - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Architect && received_confirm_word == true", to: DELIVER }
+    - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: EXECUTE }
+    - { id: T06b, from: EXECUTE, event: E_USER_CONTINUE_DELIVER, guard: "continue_word_received == true", to: WAIT_CONFIRM }
     - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Architect", to: CHECK }
-    - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: WAIT_CONFIRM }
     - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
     - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
     # 優先級 3：萬用（仍屬 transitions）
@@ -197,7 +199,7 @@ fsm:
 | 編號 | 不變式 |
 |---|---|
 | I-01 | 未經 `E_CONFIRM_LIST`，不得輸出檔案內容。 |
-| I-02 | 挑戰方案對抗者與合規審判者皆不得進入 STATE_DELIVER；FSM 內僅系統架構師（Architect）可進入。 |
+| I-02 | 挑戰方案對抗者與合規審判者皆不得進入 STATE_EXECUTE 與 STATE_DELIVER；FSM 內僅系統架構師（Architect）可進入。 |
 | I-03 | 缺實體檔不得輸出結論（詳見 R-011）。 |
 | I-04 | 同包重傳取 Version 數量大者。 |
 | I-05 | 規則衝突覆蓋必附聲明。 |
@@ -205,9 +207,18 @@ fsm:
 | I-07 | WAIT_CONFIRM 未得映射前不切話題；提問／新任務優先除外。 |
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
-| I-10 | 未收到 Ken 的 `方案已落實` 與 `清單已確定開始交付`，不得進入交付檔案。 |
+| I-10 | 未收到 Ken 的 `方案已落實` 與 `清單已確定開始交付`，不得進入 `STATE_EXECUTE` 輸出檔案。 |
 
-### 2.7 Fallback（D5）
+### 2.7 情境模擬（FSM 防呆驗證）
+
+| 情境 | 過程 | FSM 轉移與防呆結果 |
+|---|---|---|
+| **正常交付** | 討論 ➜ `方案已落實` ➜ 清單 ➜ `清單已確定開始交付` ➜ 輸出第 1 檔 ➜ `[繼續交付]` ➜ 輸出第 2 檔。 | 依序 `DISCUSS` ➜ `DELIVER` ➜ `EXECUTE` ➜ `WAIT_CONFIRM` ➜ `EXECUTE`，完全合規。 |
+| **中途岔題** | 在 `WAIT_CONFIRM` 時問問題。 | 觸發 `T07b`，退回 `DISCUSS`。此時若使用者輸入「A」，FSM 判定僅能進 `DELIVER` 重列清單，**物理上無法進 `EXECUTE` 偷跑檔案**。 |
+| **邊看邊改** | 在 `WAIT_CONFIRM` 要求修改。 | 退回 `DISCUSS`。需重新走 `方案已落實` ➜ `清單已確定開始交付` 流程，確保 AI 不會擅自覆蓋。 |
+| **合規檢查** | 在 `DISCUSS` 或 `WAIT_CONFIRM` 輸入「檢查」。 | 進入 `CHECK`，貼出 K-001/K-002 證據後，自動退回 `DISCUSS`。 |
+
+### 2.8 Fallback（D5）
 
 > 未預期事件 (s, e)：
 >   保持原態
@@ -215,7 +226,7 @@ fsm:
 >   不中斷對話
 >   不更新狀態宣告之狀態欄
 
-### 2.8 意圖解鎖（WAIT_CONFIRM）
+### 2.9 意圖解鎖（WAIT_CONFIRM）
 
 ```yaml
 intent_unlock:
@@ -226,7 +237,7 @@ intent_unlock:
     - P4: "提問／新任務優先（T07b），末尾附選項"
 ```
 
-### 2.9 對話編號生成與轉換
+### 2.10 對話編號生成與轉換
 
 格式為 `{前綴}-{YYYYMMDD}-{序號}`。為解決統一大腦下「先四檔、後專案」的盲區，生成機制如下：
 
@@ -439,6 +450,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900119
-W: ai-system-20261024-013#4
+V: 1792900124
+W: ai-system-20261024-013#19
 ═══ */
