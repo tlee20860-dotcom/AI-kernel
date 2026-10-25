@@ -30,6 +30,7 @@
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
 | R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷 |
 | R-025 | 鐵律 | DSL（checklist） | 防硬編碼，檢查邏輯標識符與映射表 |
+| R-026 | 鐵律 | DSL | 會話鎖與隔離區，攔截中途體系檔案 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
@@ -49,7 +50,7 @@
 | F-007 | 格式 | DSL | Patch 廢除，可判 |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略詞彙，可判；含 APPEND_ONLY |
 
-**統計**：DSL 化 38 條；保留散文 3 條（R-007、R-015、S-007）。
+**統計**：DSL 化 39 條；保留散文 3 條（R-007、R-015、S-007）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -66,7 +67,7 @@
 | 混合包阻擋 | 規則 | DSL | input 包含合法與非法檔 → return reject |
 | 歸檔 | 流程 | DSL（checklist） | 門檻可列舉 |
 
-**詞表說明**：詞 65、78、79、80、81 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
+**詞表說明**：詞 65、78、79、80、81、85、86 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
 
 ---
 
@@ -101,7 +102,7 @@ rules_dsl:
       revoked_if: "input_contains(ANY of keyword_list)"
   R-012: "IF any_time THEN FORBID(declare_conversation_end_unilaterally)"
   # R-013: 已廢除
-  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block) AND FORBID(mixing_with_options) AND REQUIRE(questions_at_bottom)"
+  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block) AND FORBID(mixing_with_options) AND REQUIRE(questions_at_bottom) AND IF state != DISCUSS THEN FORBID(ABCD_options)"
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
   R-018: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target)"
@@ -109,6 +110,7 @@ rules_dsl:
   R-022: "IF event == E_USER_FORCE_ABORT THEN EXECUTE(stop_all_output AND transition_to_DISCUSS)"
   R-024: "IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade) THEN REQUIRE(deliver_refactor_map_first AND wait_for_approval) AND FORBID(code_delivery_before_approval) AND FORBID(delete_old_file_without_ken_consent)"
   R-025: "IF document_or_code_contains(hardcoded_filename OR hardcoded_path) THEN FORBID(commit) AND REQUIRE(use_logical_identifier OR reference_A00_1_1)"
+  R-026: "IF state != NATIVE AND event == SYSTEM_FILE_UPLOAD AND file_differs_from_session_lock THEN FORBID(load_content) AND REQUIRE(quarantine_zone) AND EXECUTE(emit_warning)"
 
   # ── 事前提問（S）──
   S-001: "SHALL declare three columns: file_count, existing_rule_hit, disposition; new_addition_requires_reason"
@@ -211,6 +213,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792900121
-W: ai-system-20261024-013#13
+V: 1792900138
+W: ai-system-20261024-013#7
 ═══ */
