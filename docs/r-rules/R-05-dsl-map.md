@@ -26,9 +26,7 @@
 | R-016 | 鐵律 | DSL | 四大危機分類，可判 |
 | R-017 | 鐵律 | DSL | 專案缺 SOP 三選項，可判 |
 | R-018 | 鐵律 | DSL | affected 多目標更新，可判 |
-| R-019 | 鐵律 | DSL（checklist） | 觸發條件可列舉清單；「結構大變」保留語意判斷 |
-| R-020 | 鐵律 | DSL | 破壞性操作需密語，可掃描 |
-| R-021 | 鐵律 | DSL | 全域批次需密語，可掃描 |
+| R-019 | 鐵律 | DSL（checklist） | 觸發條件可列舉清單；獨立提問優先於清單 |
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
 | R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
@@ -45,12 +43,12 @@
 | F-002 | 格式 | DSL | 路徑 Code Block，可掃描 |
 | F-003 | 格式 | DSL | 三反引號包裹；含代碼塊時外層四反引號 |
 | F-004 | 格式 | 保留散文 | 含例外條款，DSL 化反而更複雜 |
-| F-005 | 格式 | DSL | EOF 三行，可掃描 |
+| F-005 | 格式 | DSL | EOF 三行，含語言例外豁免 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
 | F-007 | 格式 | DSL | Patch 廢除，可判 |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略詞彙，可判；含 APPEND_ONLY |
 
-**統計**：DSL 化 36 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
+**統計**：DSL 化 38 條；保留散文 3 條（R-007、R-015、S-007）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -67,7 +65,7 @@
 | 混合包阻擋 | 規則 | DSL | input 包含合法與非法檔 → return reject |
 | 歸檔 | 流程 | DSL（checklist） | 門檻可列舉 |
 
-**詞表說明**：詞 34 名稱變更、詞 48~77 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
+**詞表說明**：詞 65、78、79、80 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
 
 ---
 
@@ -76,7 +74,7 @@
 ```yaml
 rules_dsl:
   # ── 行為鐵律（R）──
-  R-001: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT THEN REQUIRE(propose_before_deliver) AND REQUIRE(E_USER_CONFIRM_DELIVER_received OR E_USER_CONTINUE_DELIVER_received)"
+  R-001: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT THEN REQUIRE(propose_before_deliver) AND REQUIRE(E_USER_CONFIRM_DELIVER_received) AND REQUIRE(E_CONFIRM_LIST_received)"
   R-002: "IF state == DISCUSS AND action == OUTPUT_FILE_CONTENT THEN FORBID(file_content) AND REQUIRE(change_list)"
   R-003: "IF target_file CONTAINS multiple_changes THEN REQUIRE(single_integrated_delivery) AND REQUIRE(section_count_match)"
   R-004: "IF project_unconfirmed THEN FORBID(emit_dialog_id)"
@@ -102,15 +100,13 @@ rules_dsl:
       revoked_if: "input_contains(ANY of keyword_list)"
   R-012: "IF any_time THEN FORBID(declare_conversation_end_unilaterally)"
   R-013: "IF action == AFTER_DELIVERY THEN REQUIRE(options_A_B_C_D_with_plain_explanation) AND PAUSE"
-  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block)"
+  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block) AND FORBID(mixing_with_options) AND REQUIRE(questions_at_bottom)"
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
   R-018: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target)"
-  R-019: "IF delivery_contains_structural_change IN [split_file, add_file, delete_file, new_pattern_or_role, fsm_or_layering_change, change_records_dir] THEN REQUIRE(list_structural_changes AND prompt_evolution_record) AND IF change_records_dir THEN REQUIRE(E_USER_ARCH_CHANGE_received)"
-  R-020: "IF action == DESTRUCTIVE_OPERATION THEN REQUIRE(E_USER_DESTRUCTIVE_OP_received)"
-  R-021: "IF action == GLOBAL_BATCH_MODIFY THEN REQUIRE(E_USER_GLOBAL_BATCH_received)"
+  R-019: "IF delivery_contains_structural_change IN [split_file, add_file, delete_file, new_pattern_or_role, fsm_or_layering_change, change_records_dir] THEN REQUIRE(independent_prompt_before_list AND prompt_evolution_record) AND IF change_records_dir THEN REQUIRE(ken_explicit_consent)"
   R-022: "IF event == E_USER_FORCE_ABORT THEN EXECUTE(stop_all_output AND transition_to_DISCUSS)"
-  R-024: "IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade) THEN REQUIRE(deliver_refactor_map_first AND wait_for_approval) AND FORBID(code_delivery_before_approval)"
+  R-024: "IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade) THEN REQUIRE(deliver_refactor_map_first AND wait_for_approval) AND FORBID(code_delivery_before_approval) AND FORBID(delete_old_file_without_ken_consent)"
 
   # ── 事前提問（S）──
   S-001: "SHALL declare three columns: file_count, existing_rule_hit, disposition; new_addition_requires_reason"
@@ -129,7 +125,8 @@ rules_dsl:
   F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, replace_relation, author, version)"
   F-002: "IF path_mentioned THEN REQUIRE(wrap_in_text_code_block AND relative_path AND full_filename)"
   F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang) AND IF content_contains_code_block THEN REQUIRE(outer_fence == four_backticks)"
-  F-005: "IF output == FILE_DELIVERY THEN REQUIRE(EOF_TAG_and_no_duplicate_version_in_content)"
+  F-005:
+    rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag_and_no_duplicate_version_in_content) ELSE_IF file_ext IN ['.js', '.css'] THEN REQUIRE(wrap_EOF_in_block_comment) ELSE_IF file_ext == '.json' THEN WAIVE_EOF"
   F-006: "IF has_modifications THEN REQUIRE(status_table_at_bottom)"
   F-007: "IF action == MODIFY_FILE THEN REQUIRE(full_file_delivery) AND FORBID(patch_mode)"
   F-008:
@@ -142,10 +139,9 @@ rules_dsl:
       - "不檢查全文章節數與行數對比"
 
   # ── FSM 密語事件 ──
-  E_USER_CONFIRM_DELIVER: "觸發詞 == '方案已定案可交付'"
+  E_USER_CONFIRM_DELIVER: "觸發詞 == '方案已落實'"
+  E_CONFIRM_LIST: "觸發詞 == '清單已確定開始交付'"
   E_USER_CONTINUE_DELIVER: "觸發詞 == '[繼續交付]'"
-  E_USER_DESTRUCTIVE_OP: "觸發詞 == '[授權執行破壞性操作]'"
-  E_USER_GLOBAL_BATCH: "觸發詞 == '[授權全域批次修改]'"
   E_USER_FORCE_ABORT: "觸發詞 == '[強制中止]'"
 
   # ── R-00 §七 審查機制 ──
@@ -186,7 +182,6 @@ rules_dsl:
 | R-007 | AI 讀者優先 | 判斷依「是否含結構化元素」「段落有無廢話開場」，屬質性判斷，predicate 化會失真 |
 | R-015 | 原生知識與 SOP 衝突 | 含權限階梯、降級、架構溢出三層，DSL 化後難以表達「宣告位置」與「取得許可」的順序關係 |
 | S-007 | 防護前提確認 | 「何謂並發」「何謂必然」需人判斷，非機械可判 |
-| F-004 | 內層防呆 | 含 md 檔內 YAML 的四反引號例外，DSL 化後條件分支比原文更長 |
 | R00-7.1 | 三 AI 模式與 CHK 合成物 | 屬結構陳述，無單一 predicate；角色邊界由 CHK.md 承載 |
 
 **另 2 條說明**：R-011 與 F-008 雖已 DSL 化，但含嵌套條件（R-011 的 keyword_list、F-008 的 APPEND_ONLY），屬「部分 DSL」，仍需散文補充邊界案例。
@@ -214,6 +209,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792900043
-W: ai-system-20261024-012#62
+V: 1792900107
+W: ai-system-20261024-013#7
 ═══ */
