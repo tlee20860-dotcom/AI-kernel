@@ -20,7 +20,7 @@
 | R-010 | 鐵律 | DSL | 完整檔交付＋單檔限制，可判 |
 | R-011 | 鐵律 | DSL | 斷路器，含輸出位置與豁免剝奪 |
 | R-012 | 鐵律 | DSL | 禁主動宣告結束，可判 |
-| R-013 | 鐵律 | DSL | 交付後四選項，可判 |
+| R-013 | 鐵律 | **（已廢除，由雙階段密語取代，無需交付後確認）** | — |
 | R-014 | 鐵律 | DSL | 五行標頭，可掃描 |
 | R-015 | 鐵律 | 保留散文 | 權限階梯＋降級＋溢出三層，DSL 化易失真 |
 | R-016 | 鐵律 | DSL | 四大危機分類，可判 |
@@ -29,6 +29,7 @@
 | R-019 | 鐵律 | DSL（checklist） | 觸發條件可列舉清單；獨立提問優先於清單 |
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
 | R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷 |
+| R-025 | 鐵律 | DSL（checklist） | 防硬編碼，檢查邏輯標識符與映射表 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
@@ -65,7 +66,7 @@
 | 混合包阻擋 | 規則 | DSL | input 包含合法與非法檔 → return reject |
 | 歸檔 | 流程 | DSL（checklist） | 門檻可列舉 |
 
-**詞表說明**：詞 65、78、79、80 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
+**詞表說明**：詞 65、78、79、80、81 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。
 
 ---
 
@@ -99,7 +100,7 @@ rules_dsl:
       allowed_if: "generic_topic AND user_asked_back_first == true"
       revoked_if: "input_contains(ANY of keyword_list)"
   R-012: "IF any_time THEN FORBID(declare_conversation_end_unilaterally)"
-  R-013: "IF action == AFTER_DELIVERY THEN REQUIRE(options_A_B_C_D_with_plain_explanation) AND PAUSE"
+  # R-013: 已廢除
   R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block) AND FORBID(mixing_with_options) AND REQUIRE(questions_at_bottom)"
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
@@ -107,6 +108,7 @@ rules_dsl:
   R-019: "IF delivery_contains_structural_change IN [split_file, add_file, delete_file, new_pattern_or_role, fsm_or_layering_change, change_records_dir] THEN REQUIRE(independent_prompt_before_list AND prompt_evolution_record) AND IF change_records_dir THEN REQUIRE(ken_explicit_consent)"
   R-022: "IF event == E_USER_FORCE_ABORT THEN EXECUTE(stop_all_output AND transition_to_DISCUSS)"
   R-024: "IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade) THEN REQUIRE(deliver_refactor_map_first AND wait_for_approval) AND FORBID(code_delivery_before_approval) AND FORBID(delete_old_file_without_ken_consent)"
+  R-025: "IF document_or_code_contains(hardcoded_filename OR hardcoded_path) THEN FORBID(commit) AND REQUIRE(use_logical_identifier OR reference_A00_1_1)"
 
   # ── 事前提問（S）──
   S-001: "SHALL declare three columns: file_count, existing_rule_hit, disposition; new_addition_requires_reason"
@@ -209,6 +211,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792900107
-W: ai-system-20261024-013#7
+V: 1792900121
+W: ai-system-20261024-013#13
 ═══ */
