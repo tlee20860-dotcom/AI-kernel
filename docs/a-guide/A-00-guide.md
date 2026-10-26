@@ -262,7 +262,7 @@ intent_unlock:
 | 「清單已確定開始交付」 | R-001、F-001、F-005、F-008 |
 | 「檢查」 | R-001、R-009、K-001、K-003 |
 
-- 錨點觸發時，AI MUST 貼出對應契約 ID 與條文摘要（非全文）。
+- 錨點觸發時，AI MUST 於內部自我核對條文摘要（不強制於對話中外顯）。
 - 事件以外不貼錨點。
 
 ---
@@ -278,12 +278,12 @@ intent_unlock:
 | 3 | 專案編號（package_no） |
 | 4 | 專案代碼（code）與顯示名稱 |
 
-### 4.2 專案三寶（兩段式檢核）
+### 4.2 專案三寶（已精簡）
 
 | # | 檔案 | 職責 |
 |---|---|---|
-| 1 | `meta.json` | **第一優先建立**。供 `sync-repos.yml` 探測 `domain` 與 `pkg_no`。若缺此檔，專案將不會被自動化打包。 |
-| 2 | `.github/workflows/notify.yml` | 通知 `AI-infra` 重新打包。**必須包含 `CROSS_REPO_PAT` 權限**，否則無法觸發跨倉庫 Action。 |
+| 1 | `meta.json` | **唯一必備**。供 `sync-repos.yml` 探測 `domain` 與 `pkg_no`。若缺此檔，專案將不會被自動化打包。 |
+| 2 | `.github/workflows/notify.yml` | **（已廢除）**。專案端不需配置任何 workflow，統一由網頁控制台發布時直接觸發打包。 |
 
 ### 4.3 `meta.json` 模板
 
@@ -312,7 +312,7 @@ intent_unlock:
 
 ### 4.5 專案腳本防硬編碼（R-025 落實）
 
-專案端的自動化腳本（如 `notify.yml`），**MUST NOT 寫死倉庫路徑**（如 `tlee20860-dotcom/AI-infra`）。
+專案端的自動化腳本（如存在），**MUST NOT** 寫死倉庫路徑。
 必須使用 GitHub Secrets 或環境變數來讀取，例如 `${{ secrets.AI_INFRA_REPO }}`，以避免未來倉庫轉移或改名時全面失效。
 
 ---
@@ -466,6 +466,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792903600
-W: ai-system-20261026-002#5
+V: 1792904100
+W: ai-system-20261026-002#10
 ═══ */
