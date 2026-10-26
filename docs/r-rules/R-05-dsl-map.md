@@ -17,11 +17,11 @@
 | R-007 | 鐵律 | 保留散文 | 判斷依結構、語氣，無 predicate 可核 |
 | R-008 | 鐵律 | DSL | 交付後禁自印 K，可判 |
 | R-009 | 鐵律 | DSL | 繁中，可掃描 |
-| R-010 | 鐵律 | DSL | 完整檔交付＋單檔限制，可判 |
+| R-010 | 鐵律 | DSL | 完整檔交付＋單檔限制＋APPEND_ONLY，可判 |
 | R-011 | 鐵律 | DSL | 斷路器，含輸出位置與豁免剝奪 |
 | R-012 | 鐵律 | DSL | 禁主動宣告結束，可判 |
 | R-013 | 鐵律 | **（已廢除，由雙階段密語取代，無需交付後確認）** | — |
-| R-014 | 鐵律 | DSL | 五行標頭，可掃描 |
+| R-014 | 鐵律 | DSL | 五行標頭，可掃描；含身份解耦 |
 | R-015 | 鐵律 | 保留散文 | 權限階梯＋降級＋溢出三層，DSL 化易失真 |
 | R-016 | 鐵律 | DSL | 四大危機分類，可判 |
 | R-017 | 鐵律 | DSL | 專案缺 SOP 三選項，可判 |
@@ -38,19 +38,19 @@
 | S-005 | 提問 | DSL（checklist） | R-02 查閱 |
 | S-006 | 提問 | DSL（checklist） | 關聯影響三項 |
 | S-007 | 提問 | 保留散文 | 三事實需人判斷「何謂並發」 |
-| K-001 | 檢查 | DSL | 六項事實證據，可列舉 |
-| K-002 | 檢查 | DSL | 檔內搜尋，可掃描 |
-| K-003 | 檢查 | DSL | 三項回歸，可列舉 |
-| F-001 | 格式 | DSL | 六欄標頭，可掃描 |
+| K-001 | 檢查 | DSL | 七項事實證據，可列舉 |
+| K-002 | 檢查 | DSL | 檔內搜尋，可掃描（含進度類紀錄檔豁免） |
+| K-003 | 檢查 | DSL | 四項回歸（含事件差集），可列舉 |
+| F-001 | 格式 | DSL | 七行標頭，可掃描 |
 | F-002 | 格式 | DSL | 路徑 Code Block，可掃描 |
 | F-003 | 格式 | DSL | 三反引號包裹；含代碼塊時外層四反引號 |
 | F-004 | 格式 | 保留散文 | 含例外條款，DSL 化反而更複雜 |
-| F-005 | 格式 | DSL | EOF 三行，含語言例外豁免 |
+| F-005 | 格式 | DSL | EOF 三行，含語言例外豁免與源檔邊界防呆 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
-| F-007 | 格式 | DSL | Patch 廢除，可判 |
+| F-007 | 格式 | DSL | Patch 廢除，預設完整檔與 APPEND_ONLY，可判 |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略詞彙，可判；含 APPEND_ONLY |
 
-**統計**：DSL 化 39 條；保留散文 3 條（R-007、R-015、S-007）。
+**統計**：DSL 化 41 條；保留散文 3 條（R-007、R-015、S-007）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -84,7 +84,7 @@ rules_dsl:
   R-006: "IF proposing THEN REQUIRE(declare_file_count) AND IF file_count >= 2 THEN REQUIRE(reason_not_one)"
   R-008: "IF action == AFTER_DELIVERY THEN FORBID(auto_emit_K002)"
   R-009: "IF response == ANY THEN REQUIRE(lang == ZH_TW AND no_simplified_chars)"
-  R-010: "IF action == DELIVER_FILE THEN REQUIRE(mode == FULL_FILE) AND REQUIRE(one_file_per_reply) AND REQUIRE(F-001_header_with_mode)"
+  R-010: "IF action == DELIVER_FILE THEN REQUIRE(mode == FULL_FILE OR mode == APPEND_ONLY) AND REQUIRE(one_file_per_reply) AND REQUIRE(F-001_header_with_mode)"
   R-011:
     trigger: "target_file == MISSING AND target_is_generic == false"
     generic_declaration: "MUST DECLARE domain_classification"
@@ -102,7 +102,7 @@ rules_dsl:
       revoked_if: "input_contains(ANY of keyword_list)"
   R-012: "IF any_time THEN FORBID(declare_conversation_end_unilaterally)"
   # R-013: 已廢除
-  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND IF prompt_word_given THEN REQUIRE(separate_code_block) AND FORBID(mixing_with_options) AND REQUIRE(questions_at_bottom) AND IF state != DISCUSS THEN FORBID(ABCD_options)"
+  R-014: "IF response == ANY THEN ENFORCE_HEADER_FORMAT(lines=5, lang=ZH_TW) AND REQUIRE(role_state_decoupled) AND IF prompt_word_given THEN REQUIRE(separate_code_block) AND FORBID(mixing_with_options) AND REQUIRE(questions_at_bottom) AND IF state != DISCUSS THEN FORBID(ABCD_options)"
   R-016: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories)"
   R-017: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C)"
   R-018: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target)"
@@ -121,9 +121,9 @@ rules_dsl:
   S-006: { rule: "MUST list keywords, affected files with sync notes, confirmed-unaffected files" }
 
   # ── 事後檢查（K）──
-  K-001: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(evidence_6_items: [R-001, R-005, R-009, R-011, F-005, F-008])"
-  K-002: "IF trigger == CHECK THEN REQUIRE(search_result: ['✅','已交付','狀態總表']) == 0"
-  K-003: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(three_checks: state_set_match, term_numbers_continuous, cross_package_refs_valid)"
+  K-001: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(evidence_7_items: [R-001, R-005, R-009, R-011, F-005, F-008, artifact_shell_scan])"
+  K-002: "IF trigger == CHECK THEN REQUIRE(search_result: ['✅','已交付','狀態總表']) == 0 AND EXEMPT(['PROGRESS.md', 'WF-PROGRESS.md'])"
+  K-003: "IF trigger == CHECK OR START_DELIVERY THEN REQUIRE(four_checks: state_set_match, term_numbers_continuous, cross_package_refs_valid, event_set_diff_empty)"
 
   # ── 格式規範（F）──
   F-001: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, replace_relation, author, version)"
@@ -131,18 +131,20 @@ rules_dsl:
   F-003: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_backticks_with_lang) AND IF content_contains_code_block THEN REQUIRE(outer_fence == four_backticks)"
   F-005:
     rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag_and_no_duplicate_version_in_content) ELSE_IF file_ext IN ['.js', '.css'] THEN REQUIRE(wrap_EOF_in_block_comment) ELSE_IF file_ext == '.json' THEN WAIVE_EOF"
+    source_boundary_rule: "IF output == SOURCE_FILE THEN FORBID(synthesis_shell: '> 體系版本', 'FILE START', 'FILE END', '## 📄')"
   F-006: "IF has_modifications THEN REQUIRE(status_table_at_bottom)"
-  F-007: "IF action == MODIFY_FILE THEN REQUIRE(full_file_delivery) AND FORBID(patch_mode)"
+  F-007: "IF action == MODIFY_FILE THEN REQUIRE(full_file_delivery OR append_only_delivery) AND FORBID(patch_mode)"
   F-008:
     rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY AND FORBID(forbidden_words) ELSE_IF mode == APPEND_ONLY THEN ENFORCE_RANGE_CONTINUITY"
     forbidden_words: ["略", "保留原樣", "同上", "與前相同", "內容不變", "（省略）", "（程式碼略）", "...", "…", "參考前文", "其餘同前"]
-    append_only_scope: [SYSTEM-DECISIONS.md, SYSTEM-REJECTED.md, SYSTEM-DEBT.md, SYSTEM-ARCHIVE.md]
+    append_only_scope: [SYSTEM-REJECTED.md, SYSTEM-DEBT.md, SYSTEM-ARCHIVE.md, GENERAL-CONCLUSION.md]
     append_only_checks:
       - "ID 連續性：新增區段 ID 接續既有最大號"
       - "EOF 存在"
       - "不檢查全文章節數與行數對比"
 
   # ── FSM 密語事件 ──
+  # 事件集 SSOT 為 A-00 §2.3，本區塊僅列密語事件
   E_USER_CONFIRM_DELIVER: "觸發詞 == '方案已落實'"
   E_CONFIRM_LIST: "觸發詞 == '清單已確定開始交付'"
   E_USER_CONTINUE_DELIVER: "觸發詞 == '[繼續交付]'"
@@ -213,6 +215,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792900138
-W: ai-system-20261024-013#7
+V: 1792902600
+W: ai-system-20261026-001#6
 ═══ */
