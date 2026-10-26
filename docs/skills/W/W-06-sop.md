@@ -1,10 +1,6 @@
-## 📄 AI-kernel/docs/skills/W/W-06-sop.md
-
 # W-06 Web App 通用任務 SOP
 
-最後更新：2026-10-25
-Version: 1792901400
-Writer: webapp-20261025-001#11
+最後更新：2026-10-26
 用途：Web App 通用任務的標準作業流程（新專案啟動、新增頁面、部署驗證、緊急回滾、重寫驗證）
 
 ---
@@ -17,7 +13,7 @@ Writer: webapp-20261025-001#11
 
 | 步驟 | 動作 | 產出與要求 |
 |---|---|---|
-| **1. 環境與專案初始化** | 執行 A-00 §4 新專案建立 SOP。**禁止寫任何業務代碼**。 | `meta.json`、`.github/workflows/notify.yml`。確保自動化打包能識別專案。 |
+| **1. 架構選擇與環境初始化** | 1. 依照 `W-00 §三` 選擇架構模式（Mode A 或 Mode B）。<br>2. 執行 A-00 §4 新專案建立 SOP。<br>3. 若為 Mode B，需執行 `npm install` 並建立 Vite、Tailwind、PostCSS 等基礎設定檔（見 `W-03 §八`）。<br>**禁止寫任何業務代碼**。 | `meta.json`、`.github/workflows/notify.yml`。<br>若為 Mode B，需含 `package.json`、`vite.config.js`、`tailwind.config.js`、`postcss.config.js` 等。確保自動化打包能識別專案。 |
 | **2. 確立骨架與設定** | 建立 SPA 目錄結構與路由。**禁止寫任何頁面邏輯**。 | `config/constants.js`（路由表）、`config/state.js`（AppState）、`engine/router.js`（Hash 路由）。 |
 | **3. 建立通用引擎與 UI** | 實作通用組件（中央廚房）。**禁止綁定任何業務實體**。 | `ui/layout.js`（骨架）、`ui/table.js`（表格）、`ui/form.js`（表單）、`ui/modal.js`（彈窗）、`ui/toast.js`。 |
 | **4. 跑通最小閉環 (POC)** | 建立一個首頁（Dashboard）與一個測試實體。 | 驗證「資料層 ➜ 頁面 ➜ 引擎 ➜ 彈窗」流程。證明架構可行。 |
@@ -260,6 +256,6 @@ Writer: webapp-20261025-001#11
 
 /* ═══ EOF ═══
 F: W-06-sop.md
-V: 1792901400
-W: webapp-20261025-001#11
+V: 1792903300
+W: webapp-20261026-001#9
 ═══ */
