@@ -1,0 +1,31 @@
+{
+  "ignore_patterns": [
+    "external/old-AI-WA-FAMILY/*",
+    "external/AI-OS/*"
+  ],
+  "forbidden_words": [
+    "略", "保留原樣", "同上", "與前相同", "內容不變", "（省略）", "（程式碼略）", "...", "…", "參考前文", "其餘同前"
+  ],
+  "simplified_chars": [
+    "体", "实", "发", "档", "权", "检", "查", "网", "页", "库", "选", "项", "标", "准", "记", "录", "历", "史", "进", "化", "设", "计", "对", "应", "当", "总", "结", "归", "纳", "务", "动", "态", "统", "过", "将", "来", "并", "且"
+  ],
+  "file_specific_rules": {
+    "AI-kernel/docs/r-rules/R-00-rules.md": {
+      "check_forbidden_words": false,
+      "reason": "此檔為規則字典，必然包含禁用詞"
+    },
+    "AI-kernel/docs/r-rules/R-04-learning.md": {
+      "check_forbidden_words": false,
+      "reason": "此檔記錄歷史錯誤，允許出現禁用詞"
+    },
+    "AI-General/docs/records/SYSTEM-REJECTED.md": {
+      "check_forbidden_words": false,
+      "reason": "被否決的方案可能包含錯誤示範"
+    }
+  },
+  "_EOF": {
+    "F": "AI-kernel/docs/r-rules/validate-config.json",
+    "V": "1792904200",
+    "W": "ai-system-20261026-002#11"
+  }
+}
