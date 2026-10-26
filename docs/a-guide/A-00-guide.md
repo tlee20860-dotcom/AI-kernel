@@ -82,25 +82,21 @@ state_anchor:
 
 ```yaml
 boot_check:
+  # 核心檢查與版本一致性已移交至 validate_delivery.py (--pre-build 模式) 與 setup-structure.yml
   stage_1:
     name: "體系自檢"
     trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
     check:
-      - "比對四檔彼此 EOF 的 V 欄"
-      - "若 25-INDEX 已在場，讀其版本欄一併比對"
-    if_mismatch:
-      action: "輸出 ⚠️ 版本不一致"
-      detail: "{檔名}：記錄 {v1} vs 實檔 {v2}"
+      - "僅確認四檔是否齊全"
     on_success:
       action: "建立會話鎖（session_lock）"
       detail: "鎖定當下四檔之 V 欄位，並輸出：『📌 當前體系版本：{從 HANDOFF 讀取}（已建立會話鎖）』"
   stage_2:
-    name: "核心比對"
-    trigger: "25-INDEX 或 20-SP-Sys 上傳進入體系時"
+    name: "邏輯比對"
+    trigger: "已由打包腳本前置處理"
     check:
-      - "讀 25-INDEX 之檔案清單的 Version 欄"
-      - "比對四檔 EOF 的 V 欄"
-  limitation: "僅抓『改過四檔卻未結案』；四檔未改、只有口頭決策者，抓不到"
+      - "無需 AI 檢查，打包前已由腳本確保無錯誤"
+  limitation: "若中途上傳新的合成物，觸發 R-026 隔離區"
 ```
 
 **pre_condition_guard（pending 攔截）**
@@ -251,9 +247,10 @@ intent_unlock:
 
 1. **開場階段（未定案）**：僅載入四檔時，對話編號一律預設為 `general-{YYYYMMDD}-{序號}`（例如 `general-20261024-001`）。此為流水式，需依靠 `25-INDEX` 或對話上下文推算，若無法確認則給 `001` 並備註。這表示處於尚未確認任務性質的純討論狀態。
 2. **確認體系任務**：若 Ken 明確指示維護體系，Header 維持 `general` 或視情況切換為 `ai-system-{YYYYMMDD}-{序號}`。
-3. **確認專案任務**：若 Ken 指示處理專案或載入專案包，切換為 `{專案代碼}-{YYYYMMDD}-{序號}`（專案代碼讀取自 `meta.json` 的 `code` 欄位）。
-4. **凍結機制**：一旦生成正式前綴（體系或專案），該對話 Header 後續直到結束都不再更改。
+3. **確認專案任務**：若 Ken 指示處理專案或載入專案包，切換為 `{專案代碼}-{YYYYMMDD}-{序號}`（專案代碼讀取自 `meta.json` 的 `code` 欄位）。**必須是 Ken 明確下達處理該專案業務的指令（如：開發、修改、審查專案代碼）。單純提供 `meta.json` 或專案參數作為體系維護之參考，不得切換前綴。**
+4. **凍結機制**：一旦生成正式前綴（體系或專案），該對話 Header 後續直到結束都不再更改。**若首輪（第一至第二輪）Ken 已明確交代任務性質（如：「修改打包腳本」屬體系），AI MUST 立刻將前綴轉為 `ai-system`（或對應體系前綴）並凍結。若未確認，維持 `general`；後續除非收到 Ken 的「專案業務指令」，否則禁止變更前綴。**
 5. **例外**：若無法讀取 `meta.json` 或未載入專案包，AI MUST 依 R-004 停止並向使用者索取，不得留空或瞎猜。
+6. **防呆宣告**：若當前任務性質已定為體系維護，但使用者輸入了專案相關參數（如 `meta.json`），AI MUST 在下一輪回覆的狀態宣告後強制輸出：`[提示：偵測到專案參數，當前維持體系任務，不切換專案前綴]`。
 
 ---
 
@@ -469,6 +466,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792902700
-W: ai-system-20261026-001#7
+V: 1792903600
+W: ai-system-20261026-002#5
 ═══ */
