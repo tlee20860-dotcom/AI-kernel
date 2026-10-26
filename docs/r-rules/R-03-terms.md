@@ -1,13 +1,3 @@
-> 體系版本：SV05
-> 生成時間：2026-10-26 09:59:50 (HKT)
-
-# R 包：規則總覽
-
-
-<!-- === FILE START: AI-kernel/docs/r-rules/R-03-terms.md === -->
-
-## 📄 AI-kernel/docs/r-rules/R-03-terms.md
-
 # R-03 共同語言表
 
 用途：體系與專案對話的共同詞彙字典，確保認知一致。
@@ -114,7 +104,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-03-terms.md
-V: 1792902200
-W: ai-system-20261026-001#1
+V: 1792902400
+W: ai-system-20261026-001#3
 ═══ */
-<!-- === FILE END: AI-kernel/docs/r-rules/R-03-terms.md === -->
