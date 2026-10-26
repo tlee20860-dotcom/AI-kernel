@@ -135,7 +135,7 @@ pre_condition_guard:
 | **2. DELIVER** | 清單確認 | 產出「交付清單」，等待確認。 | 收到 `方案已落實`。 | 收到 `清單已確定開始交付` ➜ `EXECUTE` |
 | **3. EXECUTE** | 執行交付 | 輸出第 1 個檔案的程式碼。 | 收到 `清單已確定開始交付`。 | 輸出完畢 ➜ `WAIT_CONFIRM` |
 | **4. WAIT_CONFIRM** | 等待確認 | 停下來等密語或修改意見。 | 檔案輸出完畢。 | 收到 `[繼續交付]` ➜ `EXECUTE`<br>提出修改／問題 ➜ `DISCUSS` |
-| **5. CHECK** | 合規檢查 | 貼出 K-001／K-002 證據。 | 收到「檢查」指令。 | 檢查完畢 ➜ `DISCUSS` |
+| **5. CHECK** | 合規檢查 | 貼出 K-001、K-002、K-003 證據。 | 收到「檢查」指令。 | 檢查完畢 ➜ `DISCUSS` |
 | **6. TERMINATED** | 終止 | 交接完畢，系統關閉。 | 收到「進入結束對話SOP流程」且完成交接。 | 收到新任務／問題 ➜ `DISCUSS` (甦醒) |
 
 ### 2.3 事件集 E
@@ -153,6 +153,8 @@ pre_condition_guard:
 | `E_USER_CONTINUE_DELIVER` | `[繼續交付]` |
 | `E_USER_FORCE_ABORT` | `[強制中止]` |
 | `E_USER_NEW_TASK` | 任何未預期的新問題或新任務（含甦醒） |
+| `E_USER_MAPPING` | 在 WAIT_CONFIRM 狀態下收到自然語言修改意見（如：A已更新／B需修改），觸發意圖解鎖機制 |
+| `E_CHECK_DONE` | 合規檢查完畢，證據已貼出，自動退回 DISCUSS |
 
 ### 2.4 角色轉移函數 ρ
 
@@ -211,6 +213,7 @@ fsm:
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
 | I-10 | 未收到 Ken 的 `方案已落實` 與 `清單已確定開始交付`，不得進入 `STATE_EXECUTE` 輸出檔案。 |
 | I-11 | 會話鎖建立後，若中途收到體系檔案，MUST 移入隔離區並忽略，不得混用新舊規則。 |
+| I-12 | §2.3 事件集與 §2.5 轉移矩陣所用事件之差集恆為空；修改 A-00 時 MUST 自檢。 |
 
 ### 2.7 情境模擬（FSM 防呆驗證）
 
@@ -464,6 +467,8 @@ next_pointer:
   3. **通用決策**（純討論區）：使用 `G-{序號}`，寫入 `GENERAL-CONCLUSION.md`。
 - 若未載入對應的紀錄檔（如 `SYSTEM-CONCLUSION.md` 或 `GENERAL-CONCLUSION.md`），輸出 `D-?` 或 `G-?` 並於 STATE_SEAL 備註「編號待補正」。
 
+/* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792900190
-W: ai-system-20261025-001#3
+V: 1792902700
+W: ai-system-20261026-001#7
+═══ */
