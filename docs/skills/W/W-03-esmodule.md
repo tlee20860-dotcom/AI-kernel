@@ -1,11 +1,7 @@
-## 📄 AI-kernel/docs/skills/W/W-03-esmodule.md
-
 # W-03 純前端 ES Module 架構（Web App 通用）
 
-最後更新：2026-10-25
-Version: 1792901600
-Writer: webapp-20261025-001#16
-用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版）
+最後更新：2026-10-26
+用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版，含 Mode B Vite 工程化指引）
 
 ---
 
@@ -143,7 +139,7 @@ export default {
 | 檔案 ≤ 800 行 | 超過拆檔 |
 | 每檔獨立 | 不合併 |
 | EOF 必加 | `.md` 用三行（F／V／W）；`.js`／`.css` 用語言支援的註解包裹；`.json` 豁免 |
-| import 路徑 | 相對路徑，不用絕對路徑或 CDN 別名（Firebase SDK 除外，走 `https://www.gstatic.com/...`） |
+| import 路徑 | **Mode A**：使用相對路徑，不用絕對路徑或 CDN 別名（Firebase SDK 除外）。<br>**Mode B**：MUST 使用 `@/` 別名，禁止 `../../` 多層相對路徑。 |
 | 事件監聽 | 頁面 `destroy()` 必須移除所有 `addEventListener`／`AppState.on` 訂閱 |
 
 ---
@@ -168,7 +164,57 @@ export default {
 
 ---
 
-## 八、關聯檔案
+## 八、Vite 工程化基礎建設（Mode B 專用）
+
+當專案於 `W-00` 選擇 **Mode B（Vite 工程化）** 時，必須建立以下基礎建設檔案。AI 開發時 MUST 遵守這些設定，不得任意更改。
+
+### 8.1 核心配置檔
+
+| 檔案 | 職責 | 關鍵設定 |
+|---|---|---|
+| `package.json` | 依賴管理與腳本 | 必須包含 `"type": "module"`、`vite`、`tailwindcss`、`firebase` 等。 |
+| `vite.config.js` | 建置與開發伺服器設定 | 設定 `@` 別名指向 `./src`，避免深層相對路徑。 |
+| `tailwind.config.js` | Tailwind 樣式擴充 | 設定 `content` 掃描範圍（`./index.html`、`./src/**/*.{js,html}`）。 |
+| `postcss.config.js` | CSS 後處理器 | 引入 `tailwindcss` 與 `autoprefixer`。 |
+| `.env.example` | 環境變數範本 | 列出所有 `VITE_*` 變數，**禁止**包含真實金鑰。 |
+
+### 8.2 專案目錄調整
+
+在 Vite 模式下，所有前端原始碼必須放置於 `src/` 目錄下，`index.html` 位於專案根目錄。
+
+```text
+/ (Root)
+├── index.html
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+├── postcss.config.js
+├── .env.example
+└── src/
+    ├── style.css
+    ├── config/
+    ├── db/
+    ├── domain/
+    ├── lib/
+    ├── ui/
+    ├── pages/
+    └── engine/
+```
+
+### 8.3 `@/` 別名使用規範
+
+在 Vite 模式下，跨目錄的 `import` MUST 使用 `@` 別名，禁止使用 `../../` 等多層相對路徑。
+
+- **正確**：`import { AppState } from '@/config/state';`
+- **錯誤**：`import { AppState } from '../../../config/state';`
+
+### 8.4 環境變數讀取規範
+
+Vite 環境變數 MUST 透過 `import.meta.env.VITE_XXX` 讀取，禁止使用 `process.env`。
+
+---
+
+## 九、關聯檔案
 
 | 主題 | 檔案 |
 |---|---|
@@ -181,6 +227,6 @@ export default {
 
 /* ═══ EOF ═══
 F: W-03-esmodule.md
-V: 1792901600
-W: webapp-20261025-001#16
+V: 1792903200
+W: webapp-20261026-001#8
 ═══ */
