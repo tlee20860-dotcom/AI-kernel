@@ -456,6 +456,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-00-rules.md
-V: 1792903400
-W: ai-system-20261026-002#3
+V: 1792903900
+W: ai-system-20261026-002#8
 ═══ */
