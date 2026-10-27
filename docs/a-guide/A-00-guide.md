@@ -51,7 +51,9 @@
 
 ---
 
-## 二、FSM（有限狀態機）
+## 二、對話生命週期（取代舊 FSM 矩陣）
+
+為降低 LLM 的認知負載（Cognitive Load），本體系全面廢除程式碼級別的 YAML 狀態機矩陣，改用「人話流程表」。AI 只需遵守以下狀態與密語的解鎖機制。
 
 ### 2.1 生命週期與缺包演算法（D2）
 
@@ -62,27 +64,10 @@
 
 - `STATE_NATIVE` 為體系外環境，不屬 S、不屬 δ。
 
-**求值順序（四步，不得交錯）**
-
-> 1. `boot_check`（版本比對，不符則警告）
-> 2. `pre_condition_guard`（pending 攔截）
-> 3. `transitions`（頂到底短路）
-> 4. `fallback_handler`（全失敗才觸發）
-
-**state_anchor（狀態錨與降級門檻）**
-
-```yaml
-state_anchor:
-  rule_1: "每次回覆前核對上一條 FSM 狀態；非必要不改"
-  rule_2: "提問分兩類：規則查詢（不改狀態）／狀態變更指令（才改）"
-  rule_3: "降級門檻：僅 E_EXIT_SYSTEM 或四檔缺失可降 NATIVE；解釋規則不構成降級理由"
-```
-
-**boot_check（開場版本比對與會話鎖）**
+**boot_check（開場極簡自檢與會話鎖）**
 
 ```yaml
 boot_check:
-  # 核心檢查與版本一致性已移交至 validate_delivery.py (--pre-build 模式) 與 setup-structure.yml
   stage_1:
     name: "體系自檢"
     trigger: "E_LOAD_PACKAGE 完成後（四檔齊全）"
@@ -103,7 +88,7 @@ boot_check:
 
 ```yaml
 pre_condition_guard:
-  rule: "IF records_pending NOT EMPTY THEN BLOCK(E_USER_CONFIRM_DELIVER) AND FORCE_STATE(CHECK)"
+  rule: "IF records_pending NOT EMPTY THEN BLOCK(E_CONFIRM_LIST) AND FORCE_STATE(CHECK)"
   pending_source: "SYSTEM-HANDOFF.md 檔頭 'records_pending' 欄位"
   resolved_when: "補寫完成且 STATE_SEAL 的 records_pending == []"
   scope: "只擋交付，不擋討論"
@@ -123,34 +108,32 @@ pre_condition_guard:
 
 - 每次僅索取第一個缺失檔，禁止一次列出多個上傳項。
 
-### 2.2 狀態集 S（6 態，依生命週期排序）
+### 2.2 狀態集 S（6 態）
 
-| 狀態 | 名稱 | AI 正在做什麼 | 進入條件（從哪來） | 下一步（往哪去） |
+| 狀態 | 名稱 | AI 允許做的事 | 進入條件（從哪來） | 下一步（往哪去） |
 |---|---|---|---|---|
-| **1. DISCUSS** | 討論中 | 聽需求、回答問題、提方案摘要。 | 開場、修改需求、岔題、檢查完畢、終止甦醒。 | 收到 `方案已落實` ➜ `DELIVER` |
-| **2. DELIVER** | 清單確認 | 產出「交付清單」，等待確認。 | 收到 `方案已落實`。 | 收到 `清單已確定開始交付` ➜ `EXECUTE` |
-| **3. EXECUTE** | 執行交付 | 輸出第 1 個檔案的程式碼。 | 收到 `清單已確定開始交付`。 | 輸出完畢 ➜ `WAIT_CONFIRM` |
-| **4. WAIT_CONFIRM** | 等待確認 | 停下來等密語或修改意見。 | 檔案輸出完畢。 | 收到 `[繼續交付]` ➜ `EXECUTE`<br>提出修改／問題 ➜ `DISCUSS` |
+| **1. DISCUSS** | 討論中 | 聽需求、回答問題、提方案摘要。禁止輸出檔案。 | 開場、修改需求、岔題、檢查完畢、終止甦醒。 | 收到 `方案已落實，提供交付相關的清單，待確認` ➜ `DELIVER` |
+| **2. DELIVER** | 清單確認 | 僅列出「交付清單」，禁止輸出檔案內容。 | 收到第一階段密語。 | 收到 `交付清單已確認，提供標題與交付模式，並輸出檔案內容` ➜ `EXECUTE` |
+| **3. EXECUTE** | 執行交付 | 輸出**單一**檔案的標頭與內容。 | 收到第二階段密語。 | 輸出完畢 ➜ `WAIT_CONFIRM` |
+| **4. WAIT_CONFIRM** | 等待確認 | 停下來等密語或修改意見。禁止主動輸出下一個檔案。 | 檔案輸出完畢。 | 收到 `[繼續交付]` ➜ `EXECUTE`<br>提出修改／問題 ➜ `DISCUSS` |
 | **5. CHECK** | 合規檢查 | 貼出 K-001、K-002、K-003 證據。 | 收到「檢查」指令。 | 檢查完畢 ➜ `DISCUSS` |
 | **6. TERMINATED** | 終止 | 交接完畢，系統關閉。 | 收到「進入結束對話SOP流程」且完成交接。 | 收到新任務／問題 ➜ `DISCUSS` (甦醒) |
 
 ### 2.3 事件集 E
 
-| 事件 | 觸發 |
-|---|---|
-| `E_CONFIRM_LIST` | 「清單已確定開始交付」 |
-| `E_CHECK` | 「檢查」 |
-| `E_TRANSFER_MODE` | `[轉交模式]`（無審查意圖） |
-| `E_HANDOFF` | 「進入結束對話SOP流程」 |
-| `E_CONFIRM_VERSION` | 「體系版本號確定修改」 |
-| `E_REJECT_PACKAGE` | 對話中途收到任何體系檔案（IP/AP/RP/UP/SP-Sys） |
-| `E_CI_FAIL` | 使用者回報 Actions／CI-CD 失敗 |
-| `E_USER_CONFIRM_DELIVER` | `方案已落實` |
-| `E_USER_CONTINUE_DELIVER` | `[繼續交付]` |
-| `E_USER_FORCE_ABORT` | `[強制中止]` |
-| `E_USER_NEW_TASK` | 任何未預期的新問題或新任務（含甦醒） |
-| `E_USER_MAPPING` | 在 WAIT_CONFIRM 狀態下收到自然語言修改意見（如：A已更新／B需修改），觸發意圖解鎖機制 |
-| `E_CHECK_DONE` | 合規檢查完畢，證據已貼出，自動退回 DISCUSS |
+| 事件 | 觸發密語 | 說明 |
+|---|---|---|
+| `E_USER_CONFIRM_DELIVER` | `方案已落實，提供交付相關的清單，待確認` | 進入清單確認階段。 |
+| `E_CONFIRM_LIST` | `交付清單已確認，提供標題與交付模式，並輸出檔案內容` | 解鎖檔案輸出。 |
+| `E_USER_CONTINUE_DELIVER` | `[繼續交付]` | 解鎖連續交付（免重新提方案，直接進 EXECUTE）。 |
+| `E_CHECK` | `檢查` | 進入合規檢查。 |
+| `E_CHECK_DONE` | (系統自動觸發) | 檢查完畢，退回 DISCUSS。 |
+| `E_HANDOFF` | `進入結束對話SOP流程` | 觸發交接 SOP。 |
+| `E_CONFIRM_VERSION` | `體系版本號確定修改` | 允許更新版本並交接。 |
+| `E_USER_FORCE_ABORT` | `[強制中止]` | 立即停止輸出，退回 DISCUSS。 |
+| `E_USER_NEW_TASK` | 任何未預期的新問題 | 包含從 TERMINATED 甦醒。 |
+| `E_REJECT_PACKAGE` | (系統偵測) | 對話中途收到體系檔案，移入隔離區。 |
+| `E_CI_FAIL` | 使用者回報 Actions 失敗 | 退回 DISCUSS 處理。 |
 
 ### 2.4 角色轉移函數 ρ
 
@@ -165,92 +148,71 @@ pre_condition_guard:
 >   if 輸入含「審查/檢查/診斷」 → 不切角色；依 §6.2 轉交對抗者或審判者
 >   else → 維持原 role
 
-### 2.5 轉移矩陣 δ（YAML 全量＋fallback_handler）
+### 2.5 狀態轉移表（取代舊 YAML 矩陣）
 
-```yaml
-fsm:
-  state_set: [DISCUSS, DELIVER, EXECUTE, WAIT_CONFIRM, CHECK, TERMINATED]
-  evaluation_order: strict_top_down
-  transitions:
-    # 優先級 1：明確意圖（置頂）
-    - { id: T07,  from: WAIT_CONFIRM, event: E_USER_MAPPING,  guard: "intent_unlock_resolved",  to: DISCUSS }
-    - { id: T07b, from: [WAIT_CONFIRM, TERMINATED], event: E_USER_NEW_TASK, guard: "has_new_question_or_task", to: DISCUSS }
-    - { id: T03,  from: DISCUSS,      event: E_HANDOFF,       guard: "seal_emitted == true",    to: TERMINATED }
-    # 優先級 2：常規
-    - { id: T01, from: DISCUSS, event: E_USER_CONFIRM_DELIVER, guard: "role == Architect && received_confirm_word == true", to: DELIVER }
-    - { id: T06, from: DELIVER, event: E_CONFIRM_LIST,   guard: "list_confirmed == true", to: EXECUTE }
-    - { id: T06b, from: EXECUTE, event: E_USER_CONTINUE_DELIVER, guard: "continue_word_received == true", to: WAIT_CONFIRM }
-    - { id: T02, from: DISCUSS, event: E_CHECK,          guard: "role == Architect", to: CHECK }
-    - { id: T08, from: CHECK,   event: E_CHECK_DONE,     guard: "always", to: DISCUSS }
-    - { id: T04, from: DISCUSS, event: E_EXIT_SYSTEM,    guard: "always", to: NATIVE }
-    # 優先級 3：萬用（仍屬 transitions）
-    - { id: T09, from: ANY, event: E_CI_FAIL,       guard: "user_reported_failure", to: DISCUSS }
-    # 密語觸發之特權事件
-    - { id: T17, from: ANY, event: E_USER_FORCE_ABORT,    guard: "always", to: DISCUSS }
-    - { id: T18, from: ANY, event: E_REJECT_PACKAGE, guard: "system_version_file_detected", to: SAME }
-  fallback_handler:
-    condition: "ALL_TRANSITIONS_FAILED"
-    action: WARN_UNEXPECTED_EVENT
-    to: SAME
-```
+| 當前狀態 | 允許行為 | 觸發事件（密語） | 下一狀態 |
+|---|---|---|---|
+| **DISCUSS** | 提方案、對話 | `E_USER_CONFIRM_DELIVER` | `DELIVER` |
+| **DISCUSS** | 提方案、對話 | `E_CHECK` | `CHECK` |
+| **DELIVER** | 列清單 | `E_CONFIRM_LIST` | `EXECUTE` |
+| **DELIVER** | 列清單 | 收到修改意見 | `DISCUSS` |
+| **EXECUTE** | 輸出單一檔案 | (輸出完畢) | `WAIT_CONFIRM` |
+| **WAIT_CONFIRM** | 等待 | `E_USER_CONTINUE_DELIVER` | `EXECUTE` (下一檔) |
+| **WAIT_CONFIRM** | 等待 | 收到修改意見 | `DISCUSS` |
+| **CHECK** | 貼證據 | `E_CHECK_DONE` | `DISCUSS` |
+| **ANY** | 強制中止 | `E_USER_FORCE_ABORT` | `DISCUSS` |
+| **ANY** | 收到新任務 | `E_USER_NEW_TASK` | `DISCUSS` |
+| **ANY** | 中途傳體系檔 | `E_REJECT_PACKAGE` | `SAME` (警告隔離) |
+
+**Fallback（未預期事件）**：
+> 保持原態，輸出一行：⚠️ 未預期事件 {e} @ {s}，維持原態。不中斷對話，不更新狀態宣告之狀態欄。
 
 ### 2.6 不變式（Invariants）
 
 | 編號 | 不變式 |
 |---|---|
 | I-01 | 未經 `E_CONFIRM_LIST`，不得輸出檔案內容。 |
-| I-02 | 挑戰方案對抗者與合規審判者皆不得進入 STATE_EXECUTE 與 STATE_DELIVER；FSM 內僅系統架構師（Architect）可進入。 |
+| I-02 | 外部角色皆不得進入 EXECUTE 與 DELIVER；FSM 內僅 Architect 可進入。 |
 | I-03 | 缺實體檔不得輸出結論（詳見 R-011）。 |
 | I-04 | 同包重傳取 Version 數量大者。 |
 | I-05 | 規則衝突覆蓋必附聲明。 |
 | I-06 | 每次回覆前五行（詳見 R-014）。 |
-| I-07 | WAIT_CONFIRM 未得映射前不切話題；提問／新任務優先除外。 |
+| I-07 | WAIT_CONFIRM 未得解鎖前不切話題；提問／新任務優先除外。 |
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
-| I-10 | 未收到 Ken 的 `方案已落實` 與 `清單已確定開始交付`，不得進入 `STATE_EXECUTE` 輸出檔案。 |
-| I-11 | 會話鎖建立後，若中途收到體系檔案，MUST 移入隔離區並忽略，不得混用新舊規則。 |
-| I-12 | §2.3 事件集與 §2.5 轉移矩陣所用事件之差集恆為空；修改 A-00 時 MUST 自檢。 |
+| I-10 | 未收到兩階段密語，不得進入 `EXECUTE` 輸出檔案。 |
+| I-11 | 會話鎖建立後，若中途收到體系檔案，MUST 移入隔離區並忽略。 |
+| I-12 | §2.3 事件集與 §2.5 轉移表所用事件之差集恆為空。 |
 
-### 2.7 情境模擬（FSM 防呆驗證）
+### 2.7 情境模擬（防呆驗證）
 
-| 情境 | 過程 | FSM 轉移與防呆結果 |
+| 情境 | 過程 | 防呆結果 |
 |---|---|---|
-| **正常交付** | 討論 ➜ `方案已落實` ➜ 清單 ➜ `清單已確定開始交付` ➜ 輸出第 1 檔 ➜ `[繼續交付]` ➜ 輸出第 2 檔。 | 依序 `DISCUSS` ➜ `DELIVER` ➜ `EXECUTE` ➜ `WAIT_CONFIRM` ➜ `EXECUTE`，完全合規。 |
-| **中途岔題** | 在 `WAIT_CONFIRM` 時問問題。 | 觸發 `T07b`，退回 `DISCUSS`。此時若使用者輸入「A」，FSM 判定僅能進 `DELIVER` 重列清單，**物理上無法進 `EXECUTE` 偷跑檔案**。 |
-| **邊看邊改** | 在 `WAIT_CONFIRM` 要求修改。 | 退回 `DISCUSS`。需重新走 `方案已落實` ➜ `清單已確定開始交付` 流程，確保 AI 不會擅自覆蓋。 |
-| **合規檢查** | 在 `DISCUSS` 或 `WAIT_CONFIRM` 輸入「檢查」。 | 進入 `CHECK`，貼出 K-001/K-002 證據後，自動退回 `DISCUSS`。 |
-| **甦醒復活** | 在 `TERMINATED` 時輸入新任務。 | 觸發 `T07b`，退回 `DISCUSS` 狀態，讀取 `STATE_SEAL` 恢復記憶。 |
-| **中途亂傳體系檔** | 在 `EXECUTE` 時上傳新的 `01-AP`。 | 觸發 `T18`，輸出「⚠️ 偵測到中途上傳體系檔案，已移入隔離區」，並維持原狀態，忽略新檔案。 |
+| **正常交付** | 討論 ➜ 密語一 ➜ 清單 ➜ 密語二 ➜ 輸出第 1 檔 ➜ `[繼續交付]` ➜ 輸出第 2 檔。 | 依序 DISCUSS ➜ DELIVER ➜ EXECUTE ➜ WAIT_CONFIRM ➜ EXECUTE，完全合規。 |
+| **中途岔題** | 在 WAIT_CONFIRM 時問問題。 | 退回 DISCUSS。若使用者亂輸入，AI 必須重新要密語，物理上無法偷跑檔案。 |
+| **邊看邊改** | 在 WAIT_CONFIRM 要求修改。 | 退回 DISCUSS。需重新走兩階段密語流程。 |
+| **甦醒復活** | 在 TERMINATED 時輸入新任務。 | 退回 DISCUSS 狀態，讀取 STATE_SEAL 恢復記憶。 |
+| **中途亂傳體系檔** | 在 EXECUTE 時上傳新檔案。 | 輸出警告，移入隔離區，維持原狀態。 |
 
-### 2.8 Fallback（D5）
-
-> 未預期事件 (s, e)：
->   保持原態
->   輸出一行：⚠️ 未預期事件 {e} @ {s}，維持原態
->   不中斷對話
->   不更新狀態宣告之狀態欄
-
-### 2.9 意圖解鎖（WAIT_CONFIRM）
+### 2.8 意圖解鎖（WAIT_CONFIRM）
 
 ```yaml
 intent_unlock:
   priority:
-    - P1: "T07／T07b 物理優先於 fallback_handler"
-    - P2: "語意映射 A已更新／B未更新／C需修改／D先解決其他"
-    - P3: "負面優先：C > B > D > A"
-    - P4: "提問／新任務優先（T07b），末尾附選項"
+    - P1: "收到 [繼續交付] 時，直接進 EXECUTE 輸出下一檔。"
+    - P2: "收到任何自然語言問題或修改意見，退回 DISCUSS。"
+    - P3: "若無法判定，退回 DISCUSS 並詢問。"
 ```
 
-### 2.10 對話編號生成與轉換
+### 2.9 對話編號（Writer）生成
 
-格式為 `{前綴}-{YYYYMMDD}-{序號}`。為解決統一大腦下「先四檔、後專案」的盲區，生成機制如下：
-
-1. **開場階段（未定案）**：僅載入四檔時，對話編號一律預設為 `general-{YYYYMMDD}-{序號}`（例如 `general-20261024-001`）。此為流水式，需依靠 `25-INDEX` 或對話上下文推算，若無法確認則給 `001` 並備註。這表示處於尚未確認任務性質的純討論狀態。
-2. **確認體系任務**：若 Ken 明確指示維護體系，Header 維持 `general` 或視情況切換為 `ai-system-{YYYYMMDD}-{序號}`。
-3. **確認專案任務**：若 Ken 指示處理專案或載入專案包，切換為 `{專案代碼}-{YYYYMMDD}-{序號}`（專案代碼讀取自 `meta.json` 的 `code` 欄位）。**必須是 Ken 明確下達處理該專案業務的指令（如：開發、修改、審查專案代碼）。單純提供 `meta.json` 或專案參數作為體系維護之參考，不得切換前綴。**
-4. **凍結機制**：一旦生成正式前綴（體系或專案），該對話 Header 後續直到結束都不再更改。**若首輪（第一至第二輪）Ken 已明確交代任務性質（如：「修改打包腳本」屬體系），AI MUST 立刻將前綴轉為 `ai-system`（或對應體系前綴）並凍結。若未確認，維持 `general`；後續除非收到 Ken 的「專案業務指令」，否則禁止變更前綴。**
-5. **例外**：若無法讀取 `meta.json` 或未載入專案包，AI MUST 依 R-004 停止並向使用者索取，不得留空或瞎猜。
-6. **防呆宣告**：若當前任務性質已定為體系維護，但使用者輸入了專案相關參數（如 `meta.json`），AI MUST 在下一輪回覆的狀態宣告後強制輸出：`[提示：偵測到專案參數，當前維持體系任務，不切換專案前綴]`。
+為根絕 LLM 算數出錯與跨日死鎖，全面廢除日期格式。
+- 格式：`{前綴}-{序號}`（如 `ai-system-001`、`UPGRADE-002`）。
+- **推算機制**：
+  - 體系對話：AI 讀取 `SYSTEM-HANDOFF.md` 中的 `W:` 欄位（上次的編號）。若為 `ai-system-003`，則本次為 `ai-system-004`。
+  - 專案對話：AI 讀取 `WF-HANDOFF.md` 中的 `W:` 欄位推算。
+- **無狀態設計**：不建立 `DIALOG-LOG.md`。若 AI 無法得知上次編號，預設給 `{前綴}-001` 並備註「（編號待補正）」。
+- **例外**：若無法讀取 `meta.json` 或未載入專案包，AI MUST 依 R-004 停止並向使用者索取，不得留空。
 
 ---
 
@@ -258,8 +220,8 @@ intent_unlock:
 
 | 事件 | 自動帶出契約 ID |
 |---|---|
-| 「方案已落實」 | R-001、F-001、F-005、F-008 |
-| 「清單已確定開始交付」 | R-001、F-001、F-005、F-008 |
+| 「方案已落實...」 | R-001、F-001、F-005、F-008 |
+| 「交付清單已確認...」 | R-001、F-001、F-005、F-008 |
 | 「檢查」 | R-001、R-009、K-001、K-003 |
 
 - 錨點觸發時，AI MUST 於內部自我核對條文摘要（不強制於對話中外顯）。
@@ -283,7 +245,7 @@ intent_unlock:
 | # | 檔案 | 職責 |
 |---|---|---|
 | 1 | `meta.json` | **唯一必備**。供 `sync-repos.yml` 探測 `domain` 與 `pkg_no`。若缺此檔，專案將不會被自動化打包。 |
-| 2 | `.github/workflows/notify.yml` | **（已廢除）**。專案端不需配置任何 workflow，統一由網頁控制台發布時直接觸發打包。 |
+| 2 | `.github/workflows/notify.yml` | **（已廢除，不再強制要求）**。專案端不需配置，統一由網頁控制台手動觸發或保留舊有但不依賴。 |
 
 ### 4.3 `meta.json` 模板
 
@@ -333,29 +295,29 @@ intent_unlock:
 >       §5.4 STATE_SEAL
 >       §5.7 重置 → 結束
 
-- 體系級決策判定（D4）：交付清單含體系源檔路徑（`docs/a-guide`、`docs/r-rules`、`docs/u-profile`、`docs/skills`、`docs/review`）∨ 決策內容直接修改 I／A／R／U 之語意。
+- 體系級決策判定（D4）：交付清單含體系源檔路徑 ∨ 決策內容直接修改 I／A／R／U 之語意。
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 紀錄更新清單（八檔，含 ARCHIVE 與 VERSIONS）
+### 5.2 紀錄更新清單（八檔）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
-| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、**`version`**、未完成事項、下一步、`records_pending` | 全文（≤80 行） |
+| 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、**`version`**、未完成事項、下一步、`records_pending`、**`W:`（下次編號）** | 全文（≤80 行） |
 | 2 | `PROGRESS.md` | 任務完成度 | 全文 |
 | 3 | `SYSTEM-CONCLUSION.md` | 議題、設計結論、決策 | 全文 |
 | 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
 | 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
-| 6 | `STATE-INDEX.md` | **（已廢除）** 已由 `cleanup-legacy.yml` 刪除，不再生成；本列僅留歷史痕跡 | — |
+| 6 | `STATE-INDEX.md` | **（已廢除）** 僅留歷史痕跡 | — |
 | 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
-| 8 | `GENERAL-CONCLUSION.md` | 通用決策紀錄（`G-xxx`） | APPEND_ONLY |
+| 8 | `GENERAL-CONCLUSION.md` | 通用決策紀錄 | APPEND_ONLY |
 
 - 禁止使用「略」字或省略內容。
-- 版本遞增規則：收到 `體系版本號確定修改` 時，AI 依本次變更等級（主版本／次版本／修訂）自行遞增 `version`。
+- 版本遞增規則：收到 `體系版本號確定修改` 時，AI 依變更等級自行遞增 `version`。
 
 ### 5.3 檔案索引提醒
 
-- `STATE-INDEX.md` 已廢除（見 §5.2 #6）。檔案索引改由 `25-INDEX.md`（AI-Packages 生成物）承載，AI 不手動修改。
+- `STATE-INDEX.md` 已廢除。檔案索引改由 `25-INDEX.md`（AI-Packages 生成物）承載，AI 不手動修改。
 - 交接時提醒：「請確認 `AI-infra` 最新 Action 是否成功跑完。」
 
 ### 5.4 STATE_SEAL 模板（取代長篇交接詞）
@@ -391,8 +353,7 @@ next_pointer:
 
 > on E_HANDOFF，對每個 affected 中的 PROJECT(P)：
 >   if P.handoff_sop == false：
->       MUST 提出：「此專案尚未建立結束對話 SOP，
->              是否 (A) 直接結束 (B) 先建立專案 SOP (C) 沿用體系 SOP」
+>       MUST 提出：「此專案尚未建立結束對話 SOP，是否 (A) 直接結束 (B) 先建立專案 SOP (C) 沿用體系 SOP」
 >       WAIT 使用者選擇
 >   else：
 >       執行專案結束 SOP
@@ -462,10 +423,10 @@ next_pointer:
   1. **體系決策**（在體系區）：使用 `D-{序號}`，接續 `SYSTEM-CONCLUSION.md` 現有最大編號＋1，跨對話累加。
   2. **專案決策**（在專案區）：使用 `D-{專案編號}-{序號}`（如 `D-90-001`），並於結束時寫入該專案的 `WF-CONCLUSION.md`。
   3. **通用決策**（純討論區）：使用 `G-{序號}`，寫入 `GENERAL-CONCLUSION.md`。
-- 若未載入對應的紀錄檔（如 `SYSTEM-CONCLUSION.md` 或 `GENERAL-CONCLUSION.md`），輸出 `D-?` 或 `G-?` 並於 STATE_SEAL 備註「編號待補正」。
+- 若未載入對應的紀錄檔，輸出 `D-?` 或 `G-?` 並於 STATE_SEAL 備註「編號待補正」（或交由網頁發布時自動校正）。
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792904100
-W: ai-system-20261026-002#10
+V: 1792905400
+W: ai-system-003#3
 ═══ */
