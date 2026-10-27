@@ -4,8 +4,6 @@
     "external/AI-OS/*"
   ],
   "file_specific_rules": {
-    "AI-kernel/docs/r-rules/R-00-rules.md": { "check_forbidden_words": false },
-    "AI-kernel/docs/r-rules/R-04-learning.md": { "check_forbidden_words": false },
     "AI-General/docs/records/SYSTEM-REJECTED.md": { "check_forbidden_words": false },
     "AI-General/docs/records/SYSTEM-HANDOFF.md": { "check_forbidden_words": false, "check_simplified": false },
     "AI-General/docs/records/SYSTEM-CONCLUSION.md": { "check_forbidden_words": false, "check_simplified": false },
@@ -24,7 +22,7 @@
   },
   "_EOF": {
     "F": "AI-kernel/docs/r-rules/validate-config.json",
-    "V": 1792908000,
-    "W": "ai-system-003#30"
+    "V": 1792909200,
+    "W": "ai-system-003#42"
   }
 }
