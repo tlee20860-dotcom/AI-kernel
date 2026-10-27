@@ -20,16 +20,11 @@
     "record_exempt_paths": ["docs/records/", "/WF-", "/p"],
     "record_exempt_repo": "AI-General",
     "show_file_path_in_error": true,
-    "error_header_format": "📄 檔案：{path}\n------------------------\n",
-    "regex_path": "(?:F:|\"F\":)\\s*\"?([^\\s\"\\n]+)\"?",
-    "patch_old_tag": "<<<<<<< OLD\n",
-    "patch_split_tag": "\n=======\n",
-    "patch_new_tag": "\n>>>>>>> NEW",
-    "append_tag": "[APPEND]"
+    "error_header_format": "📄 檔案：{path}\n------------------------\n"
   },
   "_EOF": {
     "F": "AI-kernel/docs/r-rules/validate-config.json",
-    "V": 1792905600,
-    "W": "ai-system-003#5"
+    "V": 1792908000,
+    "W": "ai-system-003#30"
   }
 }
