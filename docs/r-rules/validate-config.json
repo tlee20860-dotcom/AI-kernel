@@ -4,18 +4,22 @@
     "external/AI-OS/*"
   ],
   "file_specific_rules": {
-    "AI-kernel/docs/r-rules/R-00-rules.md": {
-      "check_forbidden_words": false,
-      "reason": "此檔為規則字典，必然包含禁用詞"
-    },
-    "AI-kernel/docs/r-rules/R-04-learning.md": {
-      "check_forbidden_words": false,
-      "reason": "此檔記錄歷史錯誤，允許出現禁用詞"
-    },
-    "AI-General/docs/records/SYSTEM-REJECTED.md": {
-      "check_forbidden_words": false,
-      "reason": "被否決的方案可能包含錯誤示範"
-    }
+    "AI-kernel/docs/r-rules/R-00-rules.md": { "check_forbidden_words": false },
+    "AI-kernel/docs/r-rules/R-04-learning.md": { "check_forbidden_words": false },
+    "AI-General/docs/records/SYSTEM-REJECTED.md": { "check_forbidden_words": false },
+    "AI-General/docs/records/SYSTEM-HANDOFF.md": { "check_forbidden_words": false, "check_simplified": false },
+    "AI-General/docs/records/SYSTEM-CONCLUSION.md": { "check_forbidden_words": false, "check_simplified": false },
+    "AI-General/docs/records/SYSTEM-DEBT.md": { "check_forbidden_words": false, "check_simplified": false },
+    "AI-General/docs/records/SYSTEM-ARCHIVE.md": { "check_forbidden_words": false, "check_simplified": false },
+    "AI-General/docs/records/SYSTEM-EVOLUTION.md": { "check_forbidden_words": false, "check_simplified": false },
+    "AI-General/docs/records/PROGRESS.md": { "check_forbidden_words": false, "check_simplified": false },
+    "AI-General/docs/records/GENERAL-CONCLUSION.md": { "check_forbidden_words": false, "check_simplified": false }
+  },
+  "console_rules": {
+    "record_auto_exempt": true,
+    "record_paths": ["docs/records/", "/WF-", "/p"],
+    "show_file_path_in_error": true,
+    "error_header_format": "📄 檔案：{path}\n------------------------\n"
   },
   "_EOF": {
     "F": "AI-kernel/docs/r-rules/validate-config.json",
