@@ -16,10 +16,16 @@
     "AI-General/docs/records/GENERAL-CONCLUSION.md": { "check_forbidden_words": false, "check_simplified": false }
   },
   "console_rules": {
-    "record_auto_exempt": true,
-    "record_paths": ["docs/records/", "/WF-", "/p"],
+    "base_system_repos": ["AI-kernel", "AI-General", "AI-infra"],
+    "record_exempt_paths": ["docs/records/", "/WF-", "/p"],
+    "record_exempt_repo": "AI-General",
     "show_file_path_in_error": true,
-    "error_header_format": "📄 檔案：{path}\n------------------------\n"
+    "error_header_format": "📄 檔案：{path}\n------------------------\n",
+    "regex_path": "(?:F:|\"F\":)\\s*\"?([^\\s\"\\n]+)\"?",
+    "patch_old_tag": "<<<<<<< OLD\n",
+    "patch_split_tag": "\n=======\n",
+    "patch_new_tag": "\n>>>>>>> NEW",
+    "append_tag": "[APPEND]"
   },
   "_EOF": {
     "F": "AI-kernel/docs/r-rules/validate-config.json",
