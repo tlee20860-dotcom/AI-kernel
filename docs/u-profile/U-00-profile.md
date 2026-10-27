@@ -122,10 +122,11 @@ workflow:
   
   # 實際操作流程
   manual_workflow: 
-    - "在 GitHub App 或網頁端修改源檔並 Commit"
+    - "AI 輸出檔案內容（支援雙階段密語與局部替換）"
+    - "前端控制台海關檢查（繁簡、禁用詞、EOF 提取）"
+    - "受控替換與發布（自動推回 GitHub 源檔）"
     - "手動觸發 AI-infra 的 setup-structure.yml Action"
-    - "下載最新的合成物（見 A-00 §1.1 對照表）"
-    - "將合成物上傳給 AI 進行分析或修改"
+    - "下載最新的合成物並開啟新對話"
 ```
 
 ---
@@ -142,6 +143,6 @@ workflow:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/u-profile/U-00-profile.md
-V: 1792900120
-W: ai-system-20261024-013#12
+V: 1792909500
+W: ai-system-004
 ═══ */
