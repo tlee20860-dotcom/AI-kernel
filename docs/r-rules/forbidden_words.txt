@@ -9,3 +9,9 @@
 …
 參考前文
 其餘同前
+
+# ═══ EOF ═══
+# F: AI-kernel/docs/r-rules/forbidden_words.txt
+# V: 1792905700
+# W: ai-system-003#6
+# ═══ EOF ═══
