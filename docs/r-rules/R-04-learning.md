@@ -52,6 +52,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-04-learning.md
-V: 1792900147
-W: ai-system-20261024-013#6
+V: 1792909600
+W: ai-system-004
 ═══ */
