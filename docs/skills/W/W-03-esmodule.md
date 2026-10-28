@@ -1,7 +1,9 @@
+## 📄 AI-kernel/docs/skills/W/W-03-esmodule.md
+
 # W-03 純前端 ES Module 架構（Web App 通用）
 
-最後更新：2026-10-26
-用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版，含 Mode B Vite 工程化指引）
+最後更新：2026-10-28
+用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版，含 Mode B Vite 工程化指引與防呆鐵律）
 
 ---
 
@@ -23,12 +25,15 @@
 | W03-R02 | **MUST NOT** | 撰寫或修改 `domain/*.js` | 禁止 import `ui/`、`pages/`。領域層只能依賴 `config/`、`db/`。 | 在 `domain/insurance.js` 裡面操作 DOM（如 `document.getElementById`）；在 `domain/settlement.js` 呼叫 `ui/toast.js` 顯示提示。 |
 | W03-R03 | **MUST NOT** | 撰寫或修改 `pages/*.js` | 禁止 import 其他 `pages/*.js`。頁面之間不得互相依賴。 | 在 `pages/input-center.js` 裡面 import `pages/dashboard.js` 的函式來共用變數。 |
 | W03-R04 | **MUST** | 涉及業務計算、金額、狀態轉換 | 必須寫在 `domain/` 的純函式中，禁止在 `pages/` 或 `ui/` 中直接寫複雜的 `for` 迴圈或 `reduce` 進行計算。 | 在 `pages/settlements.js` 裡面直接寫 `const total = list.reduce((s, r) => s + r.amount, 0)` 來算總額（應呼叫 `domain/settlement.js` 的函式）。 |
-| W03-R05 | **MUST** | 新增實體表單或列表 | 必須呼叫 `ui/form.js` 的 `createForm()` 與 `ui/table.js` 的 `renderTable()`，禁止手寫 `<form>` 或 `<table>` HTML。 | 在 `pages/input-center.js` 直接寫死一段 `<form><input...></form>` HTML 標籤。 |
+| W03-R05 | **MUST** | 新增實體表單或列表 | 必須呼叫 `ui/form.js` 的 `createForm()` 與 `ui/table.js` 的 `renderTable()`，禁止手寫 `<form>` 或 `<table>` HTML。 | 在 `pages/input-center.js` 直接寫死一段 `<form><input></form>` HTML 標籤。 |
 | W03-R06 | **MUST** | 撰寫涉及資料庫的頁面 | 只能透過 `db/read.js`（讀）、`db/write.js`（寫）或 `domain/api-client.js`（打 API）操作資料，禁止直接引入 Firebase SDK 的 `ref`, `set` 等。 | 在 `pages/portfolio.js` 直接 `import { ref, set } from 'https://...firebase...'` 並寫入資料。 |
+| W03-R07 | **MUST NOT** | 渲染工單或資料列表 | **禁止寫死欄位**。必須由外部傳入 `Schema` 或 `visibleFields`，動態生成表頭與卡片內容。 | 寫死 `order.data.amount` 或 `order.customerName`，導致換一個 Excel 專案就崩潰。 |
+| W03-R08 | **MUST** | 綁定按鈕點擊事件 | **必須使用全域事件委派（Event Delegation）**。在 `document` 上綁定一次監聽器，透過 `data-action` 屬性辨識目標，禁止對特定按鈕使用 `addEventListener`。 | 在 `render()` 裡面寫 `document.getElementById('btn').addEventListener`，導致 SPA 切換頁面後按鈕點不到。 |
+| W03-R09 | **MUST** | 渲染 UI 與載入圖示 | **必須先綁定事件（或使用事件委派），再呼叫 `createIcons()`**。 | 先執行 `createIcons()`，結果圖示出錯中斷，導致後面的程式碼全被跳過，按鈕完全失效。 |
 
 ### 0.3 交付前自檢清單（AI MUST 遵守）
 
-AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句，確認沒有違反 `W03-R01` 至 `W03-R06`。若有違反，必須重構後才可輸出，不得以「為了方便」為由妥協。
+AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R09`。若有違反，必須重構後才可輸出。
 
 ---
 
@@ -54,9 +59,10 @@ AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `impor
 |---|---|---|
 | 主體 | page-engine 解讀 Schema | 頁面模組自行 render |
 | 資料流 | data-engine 衍生 → block | 頁面直接讀 db → 渲染 |
-| 元件 | blocks（stats/list/filter…） | ui（table/cards/form/modal…） |
+| 元件 | blocks（stats/list/filter 等） | ui（table/cards/form/modal 等） |
 | 路由 | 多 HTML + 各頁入口 | SPA + Hash 路由（`engine/router.js`） |
 | 業務邏輯 | lib/ + engines/ | `domain/`（純函式抽離） |
+| 事件綁定 | 各按鈕 `addEventListener` | 全域事件委派（`data-action`） |
 
 ---
 
@@ -70,6 +76,7 @@ AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `impor
 | 純函式業務邏輯 | `domain/*.js` 不碰 DOM、不碰 Firebase，方便單元測試 |
 | 狀態集中 | `config/state.js` 單一 AppState，含事件總線 |
 | 防注入 | 所有 HTML 插值必經 `ui/format.js` 的 `esc()` |
+| 數據驅動 | 畫面依據 `Schema` 生成，不寫死業務欄位 |
 | 無框架 | 不引入 React / Vue / Svelte |
 
 ---
@@ -86,18 +93,14 @@ AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `impor
 | `config/status.js` | 狀態代碼、舊資料相容映射、`normalize`／`label`／`badgeClass` |
 | `config/app-config.js` | 平台預設與家庭覆寫合併（`getOptions`／`getYearRange`／`getUIConstants`） |
 
-**與 V1 的差異**：V1 的 `status-registry`、`entity-registry`、`label-registry`、`column-registry` 四大 Registry，在 V2 中合併為上述檔案；`label-registry` 的功能併入 `status.js` 的 `label()`。
-
 ---
 
 ## 四、核心引擎（V2）
 
 | 檔案 | 職責 |
 |---|---|
-| `engine/main.js` | 系統啟動、`onAuthStateChanged`、初始化 AppState／Config／EntityRegistry |
+| `engine/main.js` | 系統啟動、`onAuthStateChanged`、初始化 AppState／Config／EntityRegistry、註冊 PWA |
 | `engine/router.js` | Hash 路由分派、路由守衛、頁面載入與銷毀 |
-
-**與 V1 的差異**：V1 的 `page-engine`／`data-engine`／`render-engine` 三大引擎已廢除。V2 中由頁面模組自行掌控生命週期，路由僅負責載入與掛載。
 
 ---
 
@@ -114,8 +117,6 @@ export default {
 };
 ```
 
-**與 V1 的差異**：V1 頁面為宣告式 Schema（`title`／`data`／`state`／`derived`／`blocks`／`customMount`），由 page-engine 解讀。V2 改為命令式模組，Schema 不再強制。
-
 ### 5.2 UI 元件
 
 | 檔案 | 職責 |
@@ -128,8 +129,6 @@ export default {
 | `ui/controls.js` | `renderYearMonth`／`renderViewToggle`／`renderFilterBar` |
 | `ui/format.js` | `esc`／`formatHKD`／`formatNumber`／`todayISO`／`debounce` |
 
-**與 V1 的差異**：V1 的 `blocks/`（stats／list／filter／detail／form）已廢除，功能併入 `ui/table.js` 與 `ui/form.js`，並由 `renderPageLayout` 統一外框。
-
 ---
 
 ## 六、檔案規則
@@ -139,8 +138,8 @@ export default {
 | 檔案 ≤ 800 行 | 超過拆檔 |
 | 每檔獨立 | 不合併 |
 | EOF 必加 | `.md` 用三行（F／V／W）；`.js`／`.css` 用語言支援的註解包裹；`.json` 豁免 |
-| import 路徑 | **Mode A**：使用相對路徑，不用絕對路徑或 CDN 別名（Firebase SDK 除外）。<br>**Mode B**：MUST 使用 `@/` 別名，禁止 `../../` 多層相對路徑。 |
-| 事件監聽 | 頁面 `destroy()` 必須移除所有 `addEventListener`／`AppState.on` 訂閱 |
+| import 路徑 | **Mode A**：使用相對路徑。<br>**Mode B**：MUST 使用 `@/` 別名。 |
+| 事件監聽 | 頁面 `destroy()` 必須移除所有自訂事件監聽（若使用全域委派則無需移除） |
 
 ---
 
@@ -148,69 +147,34 @@ export default {
 
 | 目錄 | 建議檔數 | 內容職責 |
 |---|---|---|
-| `admin/` | 1~3 | 平台管理員專用頁面（如 `admin.js`） |
-| `config/` | 5~10 | 常數、狀態、Firebase、EntityRegistry、欄位定義、狀態系統、App Config |
-| `db/` | 2~3 | `read.js`（監聽與讀取）、`write.js`（寫入與防呆）、`index.js`（統一出口） |
-| `domain/` | 4~8 | 純函式業務邏輯（`insurance`／`settlement`／`fund`／`bank`）、`api-client.js`、`auth.js` |
-| `engine/` | 2 | `main.js`（啟動）、`router.js`（路由） |
-| `pages/` | 依頁面數 | 各頁面模組（命令式 `render`／`destroy`） |
-| `ui/` | 5~10 | 佈局、表格、表單、Modal、Toast、控制列、格式化 |
-| `css/` | 2~6 | `theme.css`（變數與重置）、`app.css`（元件樣式）、可選 `pages/*.css` |
-| `functions/api/` | 依 API 數 | CF Pages Functions（`[[path]].js` + `config.js`／`helpers.js`／`handlers*.js`） |
-| `icons/` | 1~3 | PWA 圖示 |
-| 根目錄 | — | `index.html`（SPA 唯一入口）、`sw.js`、`manifest.json`、`meta.json` |
-
-**與 V1 的差異**：V1 的 `js/config`／`js/core`／`js/lib`／`js/engines`／`js/blocks`／`js/ui`／`js/layout`／`js/entity`／`js/shared`／`js/pages` 十層結構已簡化為 V2 的扁平結構；HTML 由多頁改為單頁 SPA。
+| `config/` | 5~10 | 常數、狀態、Firebase、EntityRegistry、欄位定義 |
+| `db/` | 2~3 | `read.js`、`write.js` |
+| `domain/` | 4~8 | 純函式業務邏輯、`api-client.js`、`auth.js` |
+| `engine/` | 2 | `main.js`、`router.js` |
+| `pages/` | 依頁面數 | 各頁面模組 |
+| `ui/` | 5~10 | 佈局、表格、表單、Modal、Toast、控制列 |
+| `css/` | 2~6 | `theme.css`、`app.css` |
 
 ---
 
 ## 八、Vite 工程化基礎建設（Mode B 專用）
 
-當專案於 `W-00` 選擇 **Mode B（Vite 工程化）** 時，必須建立以下基礎建設檔案。AI 開發時 MUST 遵守這些設定，不得任意更改。
-
 ### 8.1 核心配置檔
 
 | 檔案 | 職責 | 關鍵設定 |
 |---|---|---|
-| `package.json` | 依賴管理與腳本 | 必須包含 `"type": "module"`、`vite`、`tailwindcss`、`firebase` 等。 |
-| `vite.config.js` | 建置與開發伺服器設定 | 設定 `@` 別名指向 `./src`，避免深層相對路徑。 |
-| `tailwind.config.js` | Tailwind 樣式擴充 | 設定 `content` 掃描範圍（`./index.html`、`./src/**/*.{js,html}`）。 |
-| `postcss.config.js` | CSS 後處理器 | 引入 `tailwindcss` 與 `autoprefixer`。 |
-| `.env.example` | 環境變數範本 | 列出所有 `VITE_*` 變數，**禁止**包含真實金鑰。 |
+| `package.json` | 依賴管理與腳本 | 必須包含 `"type": "module"`、`vite`、`tailwindcss` 等。 |
+| `vite.config.js` | 建置設定 | 設定 `@` 別名指向 `./src`。 |
+| `tailwind.config.js` | 樣式擴充 | 設定 `content` 掃描範圍。 |
+| `postcss.config.js` | 後處理器 | 引入 `tailwindcss`。 |
 
-### 8.2 專案目錄調整
+### 8.2 目錄調整
 
-在 Vite 模式下，所有前端原始碼必須放置於 `src/` 目錄下，`index.html` 位於專案根目錄。
-
-```text
-/ (Root)
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-├── .env.example
-└── src/
-    ├── style.css
-    ├── config/
-    ├── db/
-    ├── domain/
-    ├── lib/
-    ├── ui/
-    ├── pages/
-    └── engine/
-```
+所有前端原始碼必須放置於 `src/` 目錄下，`index.html` 位於專案根目錄。
 
 ### 8.3 `@/` 別名使用規範
 
-在 Vite 模式下，跨目錄的 `import` MUST 使用 `@` 別名，禁止使用 `../../` 等多層相對路徑。
-
-- **正確**：`import { AppState } from '@/config/state';`
-- **錯誤**：`import { AppState } from '../../../config/state';`
-
-### 8.4 環境變數讀取規範
-
-Vite 環境變數 MUST 透過 `import.meta.env.VITE_XXX` 讀取，禁止使用 `process.env`。
+跨目錄 `import` MUST 使用 `@` 別名，禁止使用 `../../`。
 
 ---
 
@@ -221,12 +185,12 @@ Vite 環境變數 MUST 透過 `import.meta.env.VITE_XXX` 讀取，禁止使用 `
 | Page Schema 與 UI 規範 | W-05-schema.md |
 | PWA + SW | W-04-pwa.md |
 | Cloudflare Functions | W-02-functions.md |
-| 本專案架構 | 詳見專案包（如 `90-P-Map.md`） |
+| 本專案架構 | 詳見專案包 |
 
 ---
 
 /* ═══ EOF ═══
-F: W-03-esmodule.md
-V: 1792903200
-W: webapp-20261026-001#8
+F: AI-kernel/docs/skills/W/W-03-esmodule.md
+V: 1792917201
+W: UPGRADE-002
 ═══ */
