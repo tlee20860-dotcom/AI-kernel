@@ -81,7 +81,7 @@ boot_check:
     trigger: "已由打包腳本前置處理"
     check:
       - "無需 AI 檢查，打包前已由腳本確保無錯誤"
-  limitation: "若中途上傳新的合成物，觸發 R-026 隔離區"
+  limitation: "若中途上傳與會話鎖版本不同之規則類體系檔，觸發 R-026 隔離區"
 ```
 
 **pre_condition_guard（pending 攔截）**
@@ -130,10 +130,13 @@ pre_condition_guard:
 | `E_CHECK_DONE` | (系統自動觸發) | 檢查完畢，退回 DISCUSS。 |
 | `E_HANDOFF` | `進入結束對話SOP流程` | 觸發交接 SOP。 |
 | `E_CONFIRM_VERSION` | `體系版本號確定修改` | 允許更新版本並交接。 |
+| `E_TRANSFER_MODE` | `[轉交模式]` | 進入跨 AI 轉交模式；含審查意圖時改依 §6.2 轉交對抗者或審判者。 |
 | `E_USER_FORCE_ABORT` | `[強制中止]` | 立即停止輸出，退回 DISCUSS。 |
 | `E_USER_NEW_TASK` | 任何未預期的新問題 | 包含從 TERMINATED 甦醒。 |
-| `E_REJECT_PACKAGE` | (系統偵測) | 對話中途收到體系檔案，移入隔離區。 |
+| `E_REJECT_PACKAGE` | (系統偵測) | 對話中途收到與會話鎖版本不同之規則類體系檔，移入隔離區。 |
 | `E_CI_FAIL` | 使用者回報 Actions 失敗 | 退回 DISCUSS 處理。 |
+
+**密語 SSOT 宣告（MUST）**：本表為全體系密語之唯一來源（SSOT）。其餘各檔（含 `R-03`、`R-05`、`U-00`）提及密語時 MUST 使用本表完整寫法，並以指向方式引用，不得自行縮寫或改寫。
 
 ### 2.4 角色轉移函數 ρ
 
@@ -162,7 +165,7 @@ pre_condition_guard:
 | **CHECK** | 貼證據 | `E_CHECK_DONE` | `DISCUSS` |
 | **ANY** | 強制中止 | `E_USER_FORCE_ABORT` | `DISCUSS` |
 | **ANY** | 收到新任務 | `E_USER_NEW_TASK` | `DISCUSS` |
-| **ANY** | 中途傳體系檔 | `E_REJECT_PACKAGE` | `SAME` (警告隔離) |
+| **ANY** | 中途傳版本不同之規則類體系檔 | `E_REJECT_PACKAGE` | `SAME` (警告隔離) |
 
 **Fallback（未預期事件）**：
 > 保持原態，輸出一行：⚠️ 未預期事件 {e} @ {s}，維持原態。不中斷對話，不更新狀態宣告之狀態欄。
@@ -181,8 +184,8 @@ pre_condition_guard:
 | I-08 | 交接詞觸發即中斷問答，優先解析。 |
 | I-09 | 合成物不可作為修改對象（詳見 I00 §五）。 |
 | I-10 | 未收到兩階段密語，不得進入 `EXECUTE` 輸出檔案。 |
-| I-11 | 會話鎖建立後，若中途收到體系檔案，MUST 移入隔離區並忽略。 |
-| I-12 | §2.3 事件集與 §2.5 轉移表所用事件之差集恆為空。 |
+| I-11 | 會話鎖建立後，若中途收到與會話鎖版本不同之規則類體系檔（IP／AP／RP／UP），MUST 移入隔離區並忽略；體系狀態包（SP-Sys）依 I-04 處理（同版沿用、新版取 Version 大者並提示）。 |
+| I-12 | §2.5 轉移表所用事件 MUST 為 §2.3 事件集之子集；§2.4 ρ 函數所用事件亦 MUST 為 §2.3 之子集。反向不要求。 |
 
 ### 2.7 情境模擬（防呆驗證）
 
@@ -192,7 +195,8 @@ pre_condition_guard:
 | **中途岔題** | 在 WAIT_CONFIRM 時問問題。 | 退回 DISCUSS。若使用者亂輸入，AI 必須重新要密語，物理上無法偷跑檔案。 |
 | **邊看邊改** | 在 WAIT_CONFIRM 要求修改。 | 退回 DISCUSS。需重新走兩階段密語流程。 |
 | **甦醒復活** | 在 TERMINATED 時輸入新任務。 | 退回 DISCUSS 狀態，讀取 STATE_SEAL 恢復記憶。 |
-| **中途亂傳體系檔** | 在 EXECUTE 時上傳新檔案。 | 輸出警告，移入隔離區，維持原狀態。 |
+| **中途亂傳體系檔** | 在 EXECUTE 時上傳與會話鎖版本不同之規則類體系檔。 | 輸出警告，移入隔離區，維持原狀態。 |
+| **中途傳新版 SP-Sys** | 在 DISCUSS 時上傳新版 20-SP-Sys.md。 | 依 I-04 取 Version 大者載入並提示，不進隔離區。 |
 
 ### 2.8 意圖解鎖（WAIT_CONFIRM）
 
@@ -247,6 +251,8 @@ intent_unlock:
 |---|---|---|
 | 1 | `meta.json` | **唯一必備**。供 `sync-repos.yml` 探測 `domain` 與 `pkg_no`。若缺此檔，專案將不會被自動化打包。 |
 | 2 | `.github/workflows/notify.yml` | **（已廢除，不再強制要求）**。專案端不需配置，統一由網頁控制台手動觸發或保留舊有但不依賴。 |
+
+**repos.json 同步提醒（MUST）**：新專案建立後，AI MUST 確認 `AI-infra/config/repos.json` 已完成同步（由 `setup-structure.yml` Step 0 自動產生，或手動補登）。若前端控制台白名單（`repos.json`）不含該專案，前端將拒絕發布該專案檔案。
 
 ### 4.3 `meta.json` 模板
 
@@ -440,12 +446,21 @@ next_pointer:
 | 4 | 觸發打包 (Action) | 人類 (Ken) | 至 `AI-infra` 執行 `setup-structure.yml`，合併生成新的共享包。 |
 | 5 | 載入新包 | 人類 (Ken) | 下載最新合成物，開啟新對話。 |
 
+**驗證模式（VALIDATE_MODE）**：
+
+| 端 | 模式 | 行為 |
+|---|---|---|
+| 前端控制台 | strict（寫檔前） | 檢查失敗即拒絕發布，為入庫閘門。 |
+| CI（`setup-structure.yml` Step 9.8） | report（打包時） | 僅記錄與輸出報告，不阻擋打包，為稽核日誌。 |
+
+- 兩者互補：前端擋「不該進庫的檔」，CI 記錄「已進庫的檔是否事後偏移」。
+
 **寫作防呆規範**：
 1. AI 撰寫體系文件時，內文若需提及 F、V、W 等欄位，**禁止使用裸寫或反引號包裹**（如 F 標記後接冒號），必須改寫為「F 欄位」或「F 標記」，避免干擾前端控制台的正則路徑提取。
 2. **禁用詞延伸防呆**：AI 撰寫文件時，MUST 避免使用包含禁用詞的複合詞。例如：禁用詞若為「略」，AI MUST 使用「無視」、「跳過」、「方針」等詞替換「忽略」、「省略」、「策略」，避免觸發前端海關的無腦匹配。
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1792909400
-W: ai-system-004
+V: 1792913300
+W: ai-system-005
 ═══ */
