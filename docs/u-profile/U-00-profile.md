@@ -81,8 +81,9 @@ terms:
   "xxx 合併包": "該專案完整狀態／代碼合併包（原 S 包）"
   退出體系: "回到 AI 原生模式"
   全中文標頭: "回覆最上面的五行中文格式"
-  繼續交付: "解鎖連續交付模式，免提方案，直接輸出下一檔"
-  雙階段密語: "方案已落實 -> 清單已確定開始交付"
+  繼續交付: "解鎖連續交付模式，免提方案，直接輸出下一檔；密語為 `[繼續交付]`，SSOT 見 A-00 §2.3"
+  雙階段密語: "第一階段：`方案已落實，提供交付相關的清單，待確認` ➜ 第二階段：`交付清單已確認，提供標題與交付模式，並輸出檔案內容`（完整寫法與 SSOT 見 A-00 §2.3）"
+  密語 SSOT: "全體系密語的唯一來源為 A-00 §2.3；其餘各檔提及密語時僅引用完整寫法，不得縮寫或改寫"
 ```
 
 ---
@@ -101,6 +102,7 @@ refusals:
   - rewrite_without_reading  # 先看再改
   - repeated_upload        # 改用上傳共享包
   - patch_delivery         # 語法常出錯，全面改用完整檔交付
+  - abbreviated_mantra     # 密語一律使用 A-00 §2.3 完整寫法，禁止縮寫
 ```
 
 ---
@@ -117,7 +119,7 @@ workflow:
   integrate_before_dev: YES      # 訓練檔案對齊後才動工
   one_delivery: YES              # 不喜歡跨對話分批，一次對話內應完成所有批次
   one_file_per_reply: YES        # 為防斷檔，嚴格限制一回覆只給 1 檔
-  continue_delivery_word: "`[繼續交付]`" # 多檔連續交付時的解鎖密語
+  continue_delivery_word: "`[繼續交付]`（SSOT 見 A-00 §2.3）" # 多檔連續交付時的解鎖密語
   post_conversation: "等 Actions 跑完 → 再下載最新共享包"
   
   # 實際操作流程
@@ -143,6 +145,6 @@ workflow:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/u-profile/U-00-profile.md
-V: 1792909500
-W: ai-system-004
+V: 1792913600
+W: ai-system-005
 ═══ */
