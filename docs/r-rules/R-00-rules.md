@@ -228,7 +228,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 修改 R-00 中任一「可被前端或 CI 檢查」之條文 | 1. 明列受影響之檢查點（前端／CI／配置）。<br>2. 同一交付內同步修改檢查點，不得分批。<br>3. 交付摘要附「同步對照表」（規則條文 → 檢查點 → 改動）。 | 交付摘要含同步對照表；檢查點與規則條文一致 | 只改 F-008 禁詞，未同步 `forbidden_words.txt`；宣稱「下次再補」 | 比對規則條文與檢查點實作 |
+| MUST | 修改 R-00 中任一「可被前端或 CI 檢查」之條文 | 1. 明列受影響之檢查點（前端／CI／配置）。<br>2. 同一交付內同步修改檢查點，不得分批。<br>3. 交付摘要附「同步對照表」（規則條文 → 檢查點 → 改動）。<br>4. 檢查點（前端／CI／配置）MUST NOT 對任何檔案設語法豁免；禁用詞、繁簡、EOF、`OLD` 字串匹配皆為硬性檢查。僅 Ken 可點擊「強制發布」，且強制發布 MUST NOT 跳過 EOF 與 `OLD` 匹配檢查。 | 交付摘要含同步對照表；檢查點與規則條文一致；前端無檔案級豁免分支；強制發布仍保留 EOF 與 OLD 匹配 | 只改 F-008 禁詞，未同步 `forbidden_words.txt`；宣稱「下次再補」；前端對規則檔或紀錄檔設語法豁免 | 比對規則條文與檢查點實作 |
 
 **同步對照表（規則條文 → 檢查點）**：
 
@@ -239,7 +239,13 @@
 | F-008 禁用詞 11 項 | 清單＋比對 | `forbidden_words.txt`、`index.html`、`validate_delivery.py` |
 | F-008 lazyPatterns 5 項 | 清單＋比對 | `forbidden_words.txt`、`index.html`、`validate_delivery.py` |
 | R-009 繁體中文 | 繁簡掃描 | `index.html`、`validate_delivery.py`（zhconv） |
-| 豁免規則 | 豁免清單 | `validate-config.json` |
+| 前端控制台豁免權 | 無豁免分支（語法豁免已廢除） | `index.html`、`validate-config.json` |
+
+/* ═══ EOF ═══
+F: AI-kernel/docs/r-rules/R-00-rules.md
+V: 1792938000
+W: ai-system-007
+═══ */
 
 - F-001 標頭由 AI 自檢；前端與 CI 均不驗證標頭格式，故不列入本表。
 
