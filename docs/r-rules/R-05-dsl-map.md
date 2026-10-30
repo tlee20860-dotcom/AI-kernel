@@ -46,7 +46,7 @@
 | F-002 | 格式 | DSL | 路徑 Code Block，可掃描 |
 | F-003 | 格式 | DSL | 波浪號包裹；含代碼塊時外層禁四反引號 |
 | F-004 | 格式 | 保留散文 | 含例外條款，DSL 化反而更複雜 |
-| F-005 | 格式 | DSL | EOF 三行，含 V 為 10 位數、語言例外豁免、源檔邊界防呆 |
+| F-005 | 格式 | DSL | EOF 三行，含 V 為 10 位數、語言例外豁免、源檔邊界防呆、程式碼禁用裝飾字符 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
 | F-007 | 格式 | DSL | Patch 廢除，三軌制交付、APPEND 標記、PARTIAL_REPLACE 無條件 EOF |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略＋lazyPatterns＋allow-delete，可判；含 APPEND_ONLY |
@@ -188,7 +188,7 @@ rules_dsl:
   F-001: { ref: "R-00 F-001", rule: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, replace_relation, author, version) ELSE -> PASS_THROUGH" }
   F-002: { ref: "R-00 F-002", rule: "IF path_mentioned THEN REQUIRE(wrap_in_text_code_block) ELSE -> PASS_THROUGH" }
   F-003: { ref: "R-00 F-003", rule: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_tildes_with_lang) ELSE -> PASS_THROUGH" }
-  F-005: { ref: "R-00 F-005", rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag) ELSE_IF file_ext == '.json' THEN REQUIRE(_EOF_key) ELSE -> PASS_THROUGH" }
+  F-005: { ref: "R-00 F-005", rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag) ELSE_IF file_ext == '.json' THEN REQUIRE(_EOF_key) ELSE_IF is_code_file THEN FORBID(decorative_chars) AND REQUIRE(standard_comment_EOF) ELSE -> PASS_THROUGH" }
   F-006: { ref: "R-00 F-006", rule: "IF has_modifications THEN REQUIRE(status_table_at_bottom) ELSE -> PASS_THROUGH" }
   F-007: { ref: "R-00 F-007", rule: "IF action == MODIFY_FILE THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND FORBID(patch_mode) ELSE -> PASS_THROUGH" }
   F-008: { ref: "R-00 F-008", rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY AND FORBID(forbidden_words) ELSE -> PASS_THROUGH" }
@@ -235,6 +235,7 @@ rules_dsl:
 | R-03 詞表變動 | 不重複映射，由 R-03 自身保證 |
 | A-00 §2.3 密語變動 | 同步 §二 FSM 密語事件區塊 |
 | A-00 §2.6 不變式變動 | 同步 §二 I 區塊 |
+| R-00 F-005 變動 | 同步 CI 腳本 `validate_delivery.py` 對應正則 |
 
 ---
 
@@ -248,6 +249,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792914700
-W: ai-system-005
+V: 1792934200
+W: ai-system-006
 ═══ */
