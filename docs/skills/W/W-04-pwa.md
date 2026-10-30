@@ -1,8 +1,6 @@
-## 📄 AI-kernel/docs/skills/W/W-04-pwa.md
-
 # W-04 PWA + Service Worker 規則（Web App 通用）
 
-最後更新：2026-10-28
+最後更新：2026-10-30
 用途：PWA + SW 通用規則與 iOS 相容性實作細節
 
 ---
@@ -17,13 +15,40 @@
 
 **選擇建議**：依專案需求決定，通常開發期使用 network-first，正式期可切換為 cache-first。若採用 Vite 打包，建議使用 `vite-plugin-pwa` 自動生成 SW 檔。
 
+### 1.1 實作防呆（跨域排除）
+在實作 `fetch` 攔截時，**必須**排除跨域請求（如 Firebase API），否則會導致登入或資料庫連線失敗。
+```javascript
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  
+  // 💡 關鍵：排除跨域請求（如 Firebase API）與 Chrome 擴充功能
+  if (url.origin !== location.origin) return;
+  
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
+  );
+});
+```
+
 ---
 
 ## 二、靜態資源與版本管理
 
 | 項目 | 說明 |
 |---|---|
-| STATIC_ASSETS | 清單集中一處 |
 | SW_VERSION | 全站統一（每次部署必須更新版本號以觸發快取更新） |
 | 更新 | 改版本號觸發更新 |
 
@@ -35,9 +60,28 @@
 
 1. **`manifest.json`**：定義 App 名稱、啟動路徑、顯示模式（`standalone`）、主題色與圖示。
 2. **`sw.js`**（Service Worker）：處理靜態資源快取與離線邏輯。
-3. **圖示資料夾 (`public/icons/`)**：至少需包含 `192x192` 與 `512x512` 的 PNG 圖示。
+3. **圖示資料夾 (`public/icons/`)**：至少需包含圖示檔案。
 
-### 3.1 `manifest.json` 標準結構
+### 3.1 圖示防呆與實作規範（實戰簡化版）
+
+舊版規範要求提供多張圖示（192x192、512x512），但實戰發現這會增加設計與替換的麻煩。**現行標準做法：只需一張高解析度圖示**。
+
+- **準備一張 `icon.png`**：尺寸為 `1024x1024`。
+- **放置位置**：`public/icons/icon.png`。
+- **`manifest.json` 設定**：
+  ```json
+  "icons": [
+    {
+      "src": "/icons/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+  ```
+  *(註：`purpose: "any maskable"` 允許 Android 系統自動裁切為圓形或其他形狀，避免留白。)*
+
+### 3.2 `manifest.json` 標準結構
 
 | 屬性 | 說明 | 範例 |
 |---|---|---|
@@ -47,7 +91,7 @@
 | `display` | 顯示模式 | `"standalone"`（隱藏瀏覽器網址列，像原生 App） |
 | `theme_color` | 瀏覽器頂部顏色 | `"#6366F1"` |
 | `background_color`| 啟動畫面背景色 | `"#F4F7FB"` |
-| `icons` | 圖示陣列 | 需包含 `purpose: "any maskable"` |
+| `icons` | 圖示陣列 | 見 3.1 規範 |
 
 ---
 
@@ -57,14 +101,14 @@
 
 ### 4.1 必須加入的 Meta 標籤
 
-在 `index.html` 中補齊以下設定：
+在 `index.html` 中補齊以下設定（**注意圖示路徑與 manifest 一致**）：
 
 ```html
 <!-- iOS 專用 PWA Meta -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="UPGRADE">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon.png">
 ```
 
 ### 4.2 註冊 Service Worker
@@ -93,7 +137,8 @@ if ('serviceWorker' in navigator) {
 | 2 | 新增檔案未加入快取清單 | 使用打包工具自動生成快取清單 |
 | 3 | 忘記更新版本 | 每次部署更新，否則使用者會看到舊畫面 |
 | 4 | 只做 manifest 沒做 iOS meta | iOS 裝置無法全螢幕顯示 |
-| 5 | 圖示路徑錯誤或缺失 | 必須確保 `public/icons/` 下的圖片存在，否則安裝會失敗 |
+| 5 | 圖示路徑錯誤或缺失 | 必須確保 `public/icons/icon.png` 存在，否則安裝會失敗（顯示無法安裝此應用程式） |
+| 6 | 跨域 API 被快取 | 在 `fetch` 中加入 `url.origin !== location.origin` 排除 |
 
 ---
 
@@ -108,6 +153,6 @@ if ('serviceWorker' in navigator) {
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/skills/W/W-04-pwa.md
-V: 1792917300
-W: UPGRADE-002
+V: 1792928800
+W: UPGRADE-004
 ═══ */
