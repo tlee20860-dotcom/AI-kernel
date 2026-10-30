@@ -1,8 +1,6 @@
-## 📄 AI-kernel/docs/skills/W/W-03-esmodule.md
-
 # W-03 純前端 ES Module 架構（Web App 通用）
 
-最後更新：2026-10-28
+最後更新：2026-10-30
 用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版，含 Mode B Vite 工程化指引與防呆鐵律）
 
 ---
@@ -30,10 +28,12 @@
 | W03-R07 | **MUST NOT** | 渲染工單或資料列表 | **禁止寫死欄位**。必須由外部傳入 `Schema` 或 `visibleFields`，動態生成表頭與卡片內容。 | 寫死 `order.data.amount` 或 `order.customerName`，導致換一個 Excel 專案就崩潰。 |
 | W03-R08 | **MUST** | 綁定按鈕點擊事件 | **必須使用全域事件委派（Event Delegation）**。在 `document` 上綁定一次監聽器，透過 `data-action` 屬性辨識目標，禁止對特定按鈕使用 `addEventListener`。 | 在 `render()` 裡面寫 `document.getElementById('btn').addEventListener`，導致 SPA 切換頁面後按鈕點不到。 |
 | W03-R09 | **MUST** | 渲染 UI 與載入圖示 | **必須先綁定事件（或使用事件委派），再呼叫 `createIcons()`**。 | 先執行 `createIcons()`，結果圖示出錯中斷，導致後面的程式碼全被跳過，按鈕完全失效。 |
+| W03-R10 | **MUST** | 多個頁面共用系統設定（如選單、工序、全域參數） | **必須使用全域狀態即時監聽**。在 `engine/main.js` 啟動時透過 `listenDocument` 監聽設定檔，變更時派發 `settings-updated` 自訂事件，各頁面監聽該事件並觸發重新渲染。 | 每個頁面各自去 `getDocument('settings')`，或者在設定頁修改後，要求使用者手動重新整理網頁才能看到變更。 |
+| W03-R11 | **MUST** | 需要在表格或卡片直接修改資料（行內編輯） | **必須採用「渲染與儲存分離」的行內編輯模式**。UI 層（如 `order-view.js`）只負責渲染 `<input>` 並拋出 `inline-edit` 事件；由獨立的處理器（如 `order-view-editor.js`）攔截事件並寫入資料庫。 | 把 `updateDocument` 直接寫進渲染 UI 的迴圈裡，或者在各個頁面各自寫一次 `change` 事件監聽與存檔邏輯。 |
 
 ### 0.3 交付前自檢清單（AI MUST 遵守）
 
-AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R09`。若有違反，必須重構後才可輸出。
+AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R11`。若有違反，必須重構後才可輸出。
 
 ---
 
@@ -63,6 +63,8 @@ AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `impor
 | 路由 | 多 HTML + 各頁入口 | SPA + Hash 路由（`engine/router.js`） |
 | 業務邏輯 | lib/ + engines/ | `domain/`（純函式抽離） |
 | 事件綁定 | 各按鈕 `addEventListener` | 全域事件委派（`data-action`） |
+| 設定同步 | 需手動重整 | 全域監聽派發 `settings-updated` |
+| 行內編輯 | 各頁面各自實作 | 獨立 Editor 模組處理 `inline-edit` |
 
 ---
 
@@ -99,7 +101,7 @@ AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `impor
 
 | 檔案 | 職責 |
 |---|---|
-| `engine/main.js` | 系統啟動、`onAuthStateChanged`、初始化 AppState／Config／EntityRegistry、註冊 PWA |
+| `engine/main.js` | 系統啟動、`onAuthStateChanged`、初始化 AppState／Config／EntityRegistry、註冊 PWA、**全域設定監聽** |
 | `engine/router.js` | Hash 路由分派、路由守衛、頁面載入與銷毀 |
 
 ---
@@ -124,7 +126,7 @@ export default {
 | `ui/layout.js` | App Shell 骨架、`renderPageLayout` 統一頁面排版、`updateNavbar` |
 | `ui/table.js` | `renderTable`（表格）、`renderCards`（卡片） |
 | `ui/form.js` | `createForm` 動態表單建構器 |
-| `ui/modal.js` | `openModal`／`closeModal`／`openConfirm`／`openPrompt` |
+| `ui/modal.js` | `openModal`（三層架構）／`closeModal`／`openConfirm`／`openPrompt` |
 | `ui/toast.js` | `showToast` 全域提示 |
 | `ui/controls.js` | `renderYearMonth`／`renderViewToggle`／`renderFilterBar` |
 | `ui/format.js` | `esc`／`formatHKD`／`formatNumber`／`todayISO`／`debounce` |
@@ -178,7 +180,23 @@ export default {
 
 ---
 
-## 九、關聯檔案
+## 九、進階共用機制（實戰沉澱）
+
+### 9.1 全域設定即時同步（W03-R10）
+當系統設定（如工序狀態、下拉選單選項）儲存在資料庫時，為了避免使用者切換頁面時讀到舊資料，必須採用廣播機制。
+1. 在 `engine/main.js` 啟動時，使用 `listenDocument('settings', 'main', ...)` 監聽。
+2. 監聽到變更時，更新 `AppState`，並執行 `window.dispatchEvent(new Event('settings-updated'))`。
+3. 各頁面在 `render()` 時加入 `window.addEventListener('settings-updated', this.updateUI.bind(this))`，並在 `destroy()` 時移除。
+
+### 9.2 通用行內編輯（W03-R11）
+若需要讓使用者在表格（Table）或卡片（Card）中直接修改資料（如：直接輸入交貨日期），請遵守以下分離架構：
+1. **渲染層（如 `order-view.js`）**：若欄位屬性 `isEditable` 為真，渲染 `<input>` 或 `<select>`，並加上 `data-action="inline-edit"`。
+2. **事件攔截**：在 `document` 的 `change` 事件中攔截 `input[data-action="inline-edit"]`，並拋出 `window.dispatchEvent(new CustomEvent('inline-edit', { detail: { id, key, value } }))`。
+3. **處理層（如 `order-view-editor.js`）**：全域監聽 `inline-edit` 事件，負責呼叫 `db/write.js` 將資料寫入資料庫，並顯示 Toast 提示。這能確保 UI 層保持乾淨，不直接依賴資料層。
+
+---
+
+## 十、關聯檔案
 
 | 主題 | 檔案 |
 |---|---|
@@ -191,6 +209,6 @@ export default {
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/skills/W/W-03-esmodule.md
-V: 1792917201
-W: UPGRADE-002
+V: 1792928500
+W: UPGRADE-004
 ═══ */
