@@ -358,7 +358,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 每個檔案 | 1. 適用於 `.md` 檔案：MUST 包含 EOF 三行（F／V／W）；內文不得重複 Version 或 Writer。修改檔案時，**MUST 刪除舊的 V 與 W 行，不得保留**。**`V` 欄 MUST 為 10 位數 Unix 時間戳**。<br>2. 適用於支援註解之程式碼（如 `.js`、`.css`、`.html`、`.yml`、`.py`）：MUST 使用該語言支援的註解格式包裹 EOF。<br>3. **`.json` 格式（無豁免權）**：為確保語法有效，MUST 在最外層加入 `_EOF` 鍵值對，包含 `F`、`V`、`W` 三個屬性。<br>4. 若交付時發現規則衝突，MUST 先提出「架構溢出宣告」或詢問 Ken，不得自行宣稱例外。<br>5. **源檔邊界防呆**：交付源檔時，第一行與最後一行 MUST NOT 是合成物外殼（如 `>`、`<!-- === FILE START`、`## 📄`）；內文 MUST NOT 包含 `> 體系版本`、`FILE START`、`FILE END`。 | 檔尾僅含一組正確格式的 EOF；V 為 10 位數；衝突時有宣告；無合成物外殼殘留 | 無 EOF；V 非 10 位數；內文重複 Version；JSON 亂加註解崩潰；連合成物外殼一起貼出 | 檢查檔尾、V 長度、內文與外殼殘留 |
+| MUST | 每個檔案 | 1. 適用於 `.md` 檔案：MUST 包含 EOF 三行（F／V／W）；內文不得重複 Version 或 Writer。修改檔案時，**MUST 刪除舊的 V 與 W 行，不得保留**。**`V` 欄 MUST 為 10 位數 Unix 時間戳**。<br>2. 適用於支援註解之程式碼（如 `.js`、`.css`、`.html`、`.yml`、`.py`）：MUST 使用該語言支援的註解格式包裹 EOF。<br>**2.1 禁用裝飾性字符**：程式碼檔案內的 EOF 註解區塊，**MUST NOT 使用** `═══`、`***`、`///` 等裝飾性分隔符，必須使用標準的 `/* EOF ... */` 或 `// EOF ...`，避免觸發 Vite/Rollup 等打包工具的解析錯誤（Expression expected）。<br>3. **`.json` 格式（無豁免權）**：為確保語法有效，MUST 在最外層加入 `_EOF` 鍵值對，包含 `F`、`V`、`W` 三個屬性。<br>4. 若交付時發現規則衝突，MUST 先提出「架構溢出宣告」或詢問 Ken，不得自行宣稱例外。<br>5. **源檔邊界防呆**：交付源檔時，第一行與最後一行 MUST NOT 是合成物外殼（如 `>`、`<!-- === FILE START`、`## 📄`）；內文 MUST NOT 包含 `> 體系版本`、`FILE START`、`FILE END`。 | 檔尾僅含一組正確格式的 EOF；V 為 10 位數；程式碼 EOF 無裝飾字符；衝突時有宣告；無合成物外殼殘留 | 無 EOF；V 非 10 位數；使用 `═══` 導致構建崩潰；內文重複 Version；連合成物外殼一起貼出 | 檢查檔尾、V 長度、註解字符、內文與外殼殘留 |
 
 <a id="f-006"></a>
 ### F-006 狀態總表（位置限制）
@@ -482,6 +482,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-00-rules.md
-V: 1792915100
-W: ai-system-005
+V: 1792932400
+W: ai-system-006
 ═══ */
