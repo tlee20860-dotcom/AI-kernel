@@ -1,6 +1,6 @@
 # W-00 領域啟動卡（Web App）
 
-最後更新：2026-10-30
+最後更新：2026-10-31
 用途：Web App 領域的啟動卡（工具鏈 / 架構模式 / 慣例 / 載入方式）
 
 ---
@@ -49,7 +49,7 @@
 | 3 | W-03-esmodule.md | 純前端 ES Module 架構（**含依賴方向鐵律與架構契約**） |
 | 4 | W-04-pwa.md | PWA + Service Worker |
 | 5 | W-05-schema.md | Web App 頁面規範與 UI 結構 |
-| 6 | W-06-sop.md | Web App 通用任務 SOP（**含新專案零到一啟動 SOP、雙清單拖曳**） |
+| 6 | W-06-sop.md | Web App 通用任務 SOP（**含新專案零到一啟動 SOP、雙清單拖曳、自動同步與推播**） |
 | 7 | W-07-errors.md | Web App 通用錯誤與防呆 |
 
 ---
@@ -110,6 +110,9 @@
 | 改 Schema / UI 排版 | W-05 |
 | 實作行內編輯與全域同步 | W-03 §九 |
 | 實作雙清單拖曳排序 | W-06 §三 |
+| 實作多角色權限矩陣 | W-03 §十一 |
+| 實作本機 Excel 自動同步 | W-06 §七 |
+| 實作原生推播通知 | W-06 §八 |
 
 ---
 
@@ -129,6 +132,9 @@
 | 10 | 設定頁改了，前台沒更新 | 派發 `settings-updated` 事件（見 W-03） |
 | 11 | Excel 尾端垃圾資料 | 遇到空值 break（見 W-07） |
 | 12 | 匯入時未依類別套用 SOP 模板 | 查詢模板並寫入 route（見 W-07） |
+| 13 | 手機端原生拖曳失效 | 引入 SortableJS 並設定 `forceFallback: true`（見 W-07） |
+| 14 | 權限設定後未生效 | 登入時漏存 `allowedAreas` 或 `allowedSales` 至全域狀態（見 W-07） |
+| 15 | 本機檔案授權中斷導致報錯 | 每次讀取前需檢查 `queryPermission`（見 W-07） |
 
 ---
 
@@ -153,8 +159,8 @@
 
 ---
 
-/* ═══ EOF ═══
+/*
 F: AI-kernel/docs/skills/W/W-00-startup.md
-V: 1792928700
-W: UPGRADE-004
-═══ */
+V: 1792989000
+W: UPGRADE-006
+*/
