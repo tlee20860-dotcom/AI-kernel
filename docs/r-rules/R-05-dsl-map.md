@@ -31,7 +31,7 @@
 | R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷 |
 | R-025 | 鐵律 | DSL（checklist） | 防硬編碼，檢查邏輯標識符與映射表 |
 | R-026 | 鐵律 | DSL | 會話鎖與隔離區；區分規則類與狀態包 |
-| R-027 | 鐵律 | DSL（checklist） | 檢查點可列舉；同步對照表可掃描 |
+| R-027 | 鐵律 | DSL（checklist） | 檢查點可列舉；同步對照表可掃描；含無豁免與強制發布權責可判 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
 | S-002 | 提問 | DSL（checklist） | 集中層判定 |
 | S-003 | 提問 | DSL（checklist） | 預設值判定 |
@@ -165,7 +165,14 @@ rules_dsl:
       ELSE -> PASS_THROUGH
   R-027:
     ref: "R-00 R-027"
-    rule: "IF modify_rule_in_R00 AND rule_is_checkable THEN REQUIRE(sync_all_checkpoints_in_same_delivery) AND REQUIRE(sync_table_in_summary) ELSE -> PASS_THROUGH"
+    rule: >-
+      IF modify_rule_in_R00 AND rule_is_checkable
+      THEN REQUIRE(sync_all_checkpoints_in_same_delivery)
+      AND REQUIRE(sync_table_in_summary)
+      AND FORBID(checkpoint_file_level_exemption)
+      AND REQUIRE(force_publish_ken_only)
+      AND REQUIRE(force_publish_keeps_eof_and_old_match)
+      ELSE -> PASS_THROUGH
 
   # ── 事前提問（S）──
   S-001: { ref: "R-00 S-001", rule: "IF proposing THEN REQUIRE(declare_three_columns) ELSE -> PASS_THROUGH" }
@@ -249,6 +256,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1792934200
-W: ai-system-006
+V: 1792938000
+W: ai-system-007
 ═══ */
