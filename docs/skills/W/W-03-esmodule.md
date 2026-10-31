@@ -1,6 +1,6 @@
 # W-03 純前端 ES Module 架構（Web App 通用）
 
-最後更新：2026-10-30
+最後更新：2026-10-31
 用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版，含 Mode B Vite 工程化指引與防呆鐵律）
 
 ---
@@ -30,10 +30,12 @@
 | W03-R09 | **MUST** | 渲染 UI 與載入圖示 | **必須先綁定事件（或使用事件委派），再呼叫 `createIcons()`**。 | 先執行 `createIcons()`，結果圖示出錯中斷，導致後面的程式碼全被跳過，按鈕完全失效。 |
 | W03-R10 | **MUST** | 多個頁面共用系統設定（如選單、工序、全域參數） | **必須使用全域狀態即時監聽**。在 `engine/main.js` 啟動時透過 `listenDocument` 監聽設定檔，變更時派發 `settings-updated` 自訂事件，各頁面監聽該事件並觸發重新渲染。 | 每個頁面各自去 `getDocument('settings')`，或者在設定頁修改後，要求使用者手動重新整理網頁才能看到變更。 |
 | W03-R11 | **MUST** | 需要在表格或卡片直接修改資料（行內編輯） | **必須採用「渲染與儲存分離」的行內編輯模式**。UI 層（如 `order-view.js`）只負責渲染 `<input>` 並拋出 `inline-edit` 事件；由獨立的處理器（如 `order-view-editor.js`）攔截事件並寫入資料庫。 | 把 `updateDocument` 直接寫進渲染 UI 的迴圈裡，或者在各個頁面各自寫一次 `change` 事件監聽與存檔邏輯。 |
+| W03-R12 | **MUST** | 建立多角色權限系統 | **必須實作三層防護**：<br>1. **路由層**：`router.js` 阻擋無權限頁面。<br>2. **UI 層**：選單依角色隱藏。<br>3. **渲染層**：共用渲染引擎加入 `isReadOnly` 與 `allowStatusChange` 參數。 | 只在選單隱藏，但使用者手動輸入網址依然可以進入；或者只改 UI，沒改底層資料寫入。 |
+| W03-R13 | **MUST** | 處理手機端觸控拖曳 | **必須引入 SortableJS**，且設定 `forceFallback: true` 與 `fallbackTolerance: 3`。 | 使用原生 HTML5 `draggable="true"`，導致手機上完全無法拖曳。 |
 
 ### 0.3 交付前自檢清單（AI MUST 遵守）
 
-AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R11`。若有違反，必須重構後才可輸出。
+AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R13`。若有違反，必須重構後才可輸出。
 
 ---
 
@@ -207,8 +209,8 @@ export default {
 
 ---
 
-/* ═══ EOF ═══
+/*
 F: AI-kernel/docs/skills/W/W-03-esmodule.md
-V: 1792928500
-W: UPGRADE-004
-═══ */
+V: 1792989100
+W: UPGRADE-006
+*/
