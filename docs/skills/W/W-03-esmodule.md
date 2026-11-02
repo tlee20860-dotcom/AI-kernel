@@ -1,6 +1,8 @@
+## 📄 AI-kernel/docs/skills/W/W-03-esmodule.md
+
 # W-03 純前端 ES Module 架構（Web App 通用）
 
-最後更新：2026-10-31
+最後更新：2026-11-02
 用途：純 HTML + ES Module 架構通用原則與目錄配置（V2 版，含 Mode B Vite 工程化指引與防呆鐵律）
 
 ---
@@ -30,12 +32,11 @@
 | W03-R09 | **MUST** | 渲染 UI 與載入圖示 | **必須先綁定事件（或使用事件委派），再呼叫 `createIcons()`**。 | 先執行 `createIcons()`，結果圖示出錯中斷，導致後面的程式碼全被跳過，按鈕完全失效。 |
 | W03-R10 | **MUST** | 多個頁面共用系統設定（如選單、工序、全域參數） | **必須使用全域狀態即時監聽**。在 `engine/main.js` 啟動時透過 `listenDocument` 監聽設定檔，變更時派發 `settings-updated` 自訂事件，各頁面監聽該事件並觸發重新渲染。 | 每個頁面各自去 `getDocument('settings')`，或者在設定頁修改後，要求使用者手動重新整理網頁才能看到變更。 |
 | W03-R11 | **MUST** | 需要在表格或卡片直接修改資料（行內編輯） | **必須採用「渲染與儲存分離」的行內編輯模式**。UI 層（如 `order-view.js`）只負責渲染 `<input>` 並拋出 `inline-edit` 事件；由獨立的處理器（如 `order-view-editor.js`）攔截事件並寫入資料庫。 | 把 `updateDocument` 直接寫進渲染 UI 的迴圈裡，或者在各個頁面各自寫一次 `change` 事件監聽與存檔邏輯。 |
-| W03-R12 | **MUST** | 建立多角色權限系統 | **必須實作三層防護**：<br>1. **路由層**：`router.js` 阻擋無權限頁面。<br>2. **UI 層**：選單依角色隱藏。<br>3. **渲染層**：共用渲染引擎加入 `isReadOnly` 與 `allowStatusChange` 參數。 | 只在選單隱藏，但使用者手動輸入網址依然可以進入；或者只改 UI，沒改底層資料寫入。 |
-| W03-R13 | **MUST** | 處理手機端觸控拖曳 | **必須引入 SortableJS**，且設定 `forceFallback: true` 與 `fallbackTolerance: 3`。 | 使用原生 HTML5 `draggable="true"`，導致手機上完全無法拖曳。 |
+| W03-R12 | **MUST** | 涉及資料修改的列表頁 | **必須遵守「單一編輯入口原則」**。列表頁（如總表、類別視圖）應純粹作為展示與搜尋之用，拔除行內編輯、下拉選單與狀態按鈕。所有修改必須引導使用者「點擊單號開啟彈窗（Modal）」進行編輯。 | 為了貪圖方便，在列表頁保留行內編輯與下拉選單，導致資料在背景與彈窗間不同步，或造成使用者誤觸。 |
 
 ### 0.3 交付前自檢清單（AI MUST 遵守）
 
-AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R13`。若有違反，必須重構後才可輸出。
+AI 在輸出任何 `.js` 檔案前，**MUST** 檢查檔案頂部的所有 `import` 語句與事件綁定方式，確認沒有違反 `W03-R01` 至 `W03-R12`。若有違反，必須重構後才可輸出。
 
 ---
 
@@ -196,6 +197,13 @@ export default {
 2. **事件攔截**：在 `document` 的 `change` 事件中攔截 `input[data-action="inline-edit"]`，並拋出 `window.dispatchEvent(new CustomEvent('inline-edit', { detail: { id, key, value } }))`。
 3. **處理層（如 `order-view-editor.js`）**：全域監聽 `inline-edit` 事件，負責呼叫 `db/write.js` 將資料寫入資料庫，並顯示 Toast 提示。這能確保 UI 層保持乾淨，不直接依賴資料層。
 
+### 9.3 單一編輯入口（Modal）
+為了解決「列表頁行內編輯」與「彈窗編輯」可能造成的資料不同步衝突，建議在較複雜的系統中採用「單一編輯入口」模式。
+1. **列表頁（`table.js`、`category.js` 等）**：移除所有輸入框、下拉選單與狀態按鈕。純粹作為展示之用。
+2. **觸發編輯**：當使用者點擊列表中的主鍵（如單號）時，觸發 `openModal` 事件。
+3. **彈窗編輯**：彈窗內載入完整的表單編輯器（如 `order-editor.js`），並在儲存後即時刷新背後的列表資料。
+4. **例外**：若為「看板（Kanban）」視圖，因應現場快速推進需求，可保留狀態的「上一步/下一步」按鈕，但其餘欄位仍應維持唯讀。
+
 ---
 
 ## 十、關聯檔案
@@ -209,8 +217,8 @@ export default {
 
 ---
 
-/*
+/* ═══ EOF ═══
 F: AI-kernel/docs/skills/W/W-03-esmodule.md
-V: 1792989100
-W: UPGRADE-006
-*/
+V: 1793075000
+W: UPGRADE-007
+═══ */
