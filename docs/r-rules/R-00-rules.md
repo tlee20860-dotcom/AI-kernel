@@ -2,9 +2,7 @@
 
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
-| R-005 關聯鎖 | R-05 DSL 映射、F-001 標頭 | 新增 FULL_FILE 矩陣要求，同步更新 R-05 映射 | PASS |
-| F-003 解耦 | F-009 一鍵複製、F-004 邊界 | F-003 專管外層包裹；F-009 管複製隔離，兩者不重疊 | PASS |
-| R-028 宣告 | F-009 一鍵複製、R-014 密語 | 限制宣告僅能純文字或反引號，避免觸發代碼塊 | PASS |
+| F-007 修改 | R-028、index.html | 局部替換改用偽 EOF 提取法；禁止 JSON 局部替換；同步修改前端檢查 | PASS |
 ======================== -->
 用途：行為鐵律 R、事前提問 S、事後檢查 K、格式規範 F、禁止事項、專案邊界、審查機制。
 
@@ -118,7 +116,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 交付任何檔案 | 1. 依 R03 詞 29 判定模式；於 F-001 標頭標明模式與事實依據。**交付模式包含 `完整檔 (FULL_FILE)`、`增量 (APPEND_ONLY)` 與 `局部替換 (PARTIAL_REPLACE)`。`PARTIAL_REPLACE` 僅限修改行數 ≤ 10 行，且 AI 必須提供精準的 `<<<<<<< OLD` 與 `>>>>>>> NEW` 區塊。若前端匹配失敗，Ken 有權要求 AI 退回 `FULL_FILE`。**<br>2. **一回覆僅限交付 1 檔。** 若有多檔需交付，必須分批回覆，不得在同一回覆中輸出多個檔案。 | 標頭含「模式：完整檔」、「模式：APPEND_ONLY」或「模式：局部替換」；每次回覆只有一個檔案區塊 | 使用原生 Patch 語法交付；瞎掰改動百分比；一次回覆貼出兩個檔案 | 檢查 F-001 標頭與檔案區塊數量 |
+| MUST | 交付任何檔案 | 1. 依 R03 詞 29 判定模式；於 F-001 標頭標明模式與事實依據。**交付模式包含 `完整檔 (FULL_FILE)`、`增量 (APPEND_ONLY)` 與 `局部替換 (PARTIAL_REPLACE)`。**<br>2. **一回覆僅限交付 1 檔。** 若有多檔需交付，必須分批回覆，不得在同一回覆中輸出多個檔案。 | 標頭含「模式：完整檔」、「模式：APPEND_ONLY」或「模式：局部替換」；每次回覆只有一個檔案區塊 | 使用原生 Patch 語法交付；瞎掰改動百分比；一次回覆貼出兩個檔案 | 檢查 F-001 標頭與檔案區塊數量 |
 
 <a id="r-011"></a>
 ### R-011 檔案取得鐵律（零實體檔斷路器）
@@ -241,7 +239,7 @@
 | 規則條文 | 檢查點 | 檔案 |
 |---|---|---|
 | F-005 EOF（F／V／W、V 10 位數） | EOF 提取與驗證 | `index.html`、`validate_delivery.py` |
-| F-007 交付模式 | `[APPEND]`、PARTIAL_REPLACE EOF | `index.html` |
+| F-007 交付模式與 JSON 限制 | `[APPEND]`、偽 EOF 提取、JSON 局部替換攔截 | `index.html`、`validate_delivery.py` |
 | F-008 禁用詞 11 項 | 清單＋比對 | `forbidden_words.txt`、`index.html`、`validate_delivery.py` |
 | F-008 lazyPatterns 5 項 | 清單＋比對 | `forbidden_words.txt`、`index.html`、`validate_delivery.py` |
 | R-009 繁體中文 | 繁簡掃描 | `index.html`、`validate_delivery.py`（zhconv） |
@@ -253,8 +251,6 @@
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
 | MUST | 交付任何專案程式碼檔案（如 `.js`, `.vue`, `.py`, `.html` 等） | 1. AI 在輸出檔案內容「之前」，MUST 先輸出一行實體宣告（不屬於檔案內容，屬於對話正文）：<br>`[專案交付物理鎖：外層 ~~~，無省略，EOF 齊全]`<br>2. **此宣告 MUST 使用單行純文字或行內代碼（反引號）呈現，絕對禁止使用多行代碼塊（`~~~` 或 ` ``` `）包裹**，以免誤觸發 F-009 的一鍵複製。<br>3. 檔案內容的外層 MUST 使用 `~~~{語言}`。<br>4. 檔案結尾 MUST 包含對應語言標準註解的 EOF（F/V/W）。<br>5. 程式碼內文 MUST NOT 包含 `// ...`、`/* ... */`、`<!-- ...` 等偷懶標記。 | 交付前有物理鎖宣告（單行/行內代碼）；外層 `~~~`；檔尾 EOF 齊全；內文無省略。 | 直接在回覆中吐出 ` ```js ` 包裹的程式碼；漏掉 EOF 直接結束；偷懶使用 `// ...`。將宣告包在 `~~~` 中。 | 檢查交付前宣告、包裹符號與 EOF。 |
-
-- F-001 標頭由 AI 自檢；前端與 CI 均不驗證標頭格式，故不列入本表。
 
 ---
 
@@ -385,7 +381,7 @@
 
 | Level | Trigger | Requirement | Acceptance | Counter-example | Verify |
 |---|---|---|---|---|---|
-| MUST | 任何檔案修改 | 全面廢除原生 Patch 模式。交付模式分為：<br>1. `FULL_FILE`（完整檔）：預設模式。<br>2. `APPEND_ONLY`（增量）：`append_only_scope` 清單內之累積型檔案；交付內容首行 MUST 標 `[APPEND]`，由前端切除舊 EOF 後追加。<br>3. `PARTIAL_REPLACE`（局部替換）：適用於修改行數 ≤ 10 行且不涉及架構變更。AI MUST 提供精準的 `<<<<<<< OLD` 與 `>>>>>>> NEW` 區塊。<br>**EOF 強制規範**：`PARTIAL_REPLACE` 之 `NEW` 區塊 MUST **無條件**包含完整且更新後的新 EOF（F／V／W），**無論替換位置是否觸及檔案尾端**。若漏寫，前端海關將直接拒絕發布。<br>**退場機制**：若前端控制台匹配失敗，Ken 有權要求 AI 退回 `FULL_FILE` 模式重新交付。 | 交付內容為完整檔、APPEND_ONLY 之增量寫入，或提供精準的局部替換指令；PARTIAL_REPLACE 之 NEW 區塊無條件含 EOF | 使用原生 Patch 語法交由後端執行；局部替換的 `OLD` 字串與原檔不符導致發布失敗；局部替換時漏寫 EOF | 檢查交付內容、模式標註、NEW 區塊 EOF |
+| MUST | 任何檔案修改 | 全面廢除原生 Patch 模式。交付模式分為：<br>1. `FULL_FILE`（完整檔）：預設模式。<br>2. `APPEND_ONLY`（增量）：`append_only_scope` 清單內之累積型檔案；交付內容首行 MUST 標 `[APPEND]`，由前端切除舊 EOF 後追加。<br>3. `PARTIAL_REPLACE`（局部替換）：適用於修改行數 ≤ 10 行且不涉及架構變更。AI MUST 提供精準的 `<<<<<<< OLD` 與 `>>>>>>> NEW` 區塊。**AI 不得將完整檔案塞入 NEW 區塊，僅需輸出被修改的程式碼片段。** 並且在補丁區塊的**最下方**，AI MUST 獨立輸出一個完整的、標準的 EOF 區塊（包含 F/V/W）。前端控制台會自動將補丁套用至原檔，切除舊 EOF，並縫上新 EOF。<br>**JSON 格式限制**：`.json` 檔案因無註解語法承載獨立 EOF，MUST NOT 使用 `PARTIAL_REPLACE`，所有修改必須使用 `FULL_FILE`。<br>**退場機制**：若前端控制台匹配失敗，Ken 有權要求 AI 退回 `FULL_FILE` 模式重新交付。 | 交付內容為完整檔、APPEND_ONLY 之增量寫入，或提供精準的局部替換指令；局部替換附帶獨立 EOF；JSON 不使用局部替換 | 局部替換的 `OLD` 字串與原檔不符；局部替換時漏寫獨立 EOF；對 JSON 使用局部替換 | 檢查交付內容、模式標註、NEW 區塊外觀與 EOF |
 
 <a id="f-008"></a>
 ### F-008 結構完整性與嚴格無省略
