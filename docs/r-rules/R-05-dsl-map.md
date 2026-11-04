@@ -2,10 +2,10 @@
 
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
-| 新增 R-028 映射 | R-00 R-028 | 確保專案交付物理鎖有對應 DSL | PASS |
-| 新增 F-009 映射 | R-00 F-009 | 確保一鍵複製隔離有對應 DSL | PASS |
-| 更新 R-005 映射 | R-00 R-005 | 加入 `matrix_if_applicable` 條件 | PASS |
-| 更新 F-003 映射 | R-00 F-003 | 專注外層包裹，移除複製隔離條件 | PASS |
+| 更新 R-005 映射 | R-00 R-005 | 加入 `matrix_if_applicable` 條件，對齊結構化關聯鎖 | PASS |
+| 新增 R-028 映射 | R-00 R-028 | 加入專案交付物理鎖的 DSL，限制實體宣告格式 | PASS |
+| 更新 F-007 映射 | R-00 F-007 | 加入偽 EOF 提取法邏輯與 JSON 禁用局部替換之判斷 | PASS |
+| 新增 F-009 映射 | R-00 F-009 | 加入一鍵複製隔離原則的 DSL | PASS |
 ======================== -->
 
 用途：將 R-00 之鐵律映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
@@ -52,12 +52,12 @@
 | K-002 | 檢查 | DSL | 檔內搜尋，可掃描（含進度類紀錄檔豁免） |
 | K-003 | 檢查 | DSL | 三層分工（CI／AI／人工），可列舉 |
 | F-001 | 格式 | DSL | 七行標頭，可掃描 |
-| F-002 | 格式 | DSL | 路徑 Code Block，可掃描 |
+| F-002 | 格式 | DSL | 路徑單行包裹，可掃描 |
 | F-003 | 格式 | DSL | 外層波浪號包裹；含代碼塊時外層禁四反引號 |
 | F-004 | 格式 | 保留散文 | 含例外條款，DSL 化反而更複雜 |
 | F-005 | 格式 | DSL | EOF 三行，含 V 為 10 位數、語言例外豁免、源檔邊界防呆、程式碼禁用裝飾字符 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
-| F-007 | 格式 | DSL | Patch 廢除，三軌制交付、APPEND 標記、PARTIAL_REPLACE 無條件 EOF |
+| F-007 | 格式 | DSL | Patch 廢除，三軌制交付、APPEND 標記、偽 EOF 提取法與 JSON 禁用限制 |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略＋lazyPatterns＋allow-delete，可判；含 APPEND_ONLY |
 | F-009 | 格式 | DSL | 一鍵複製隔離（僅密語與檔案內容可用多行代碼塊），可判 |
 | I-11 | 不變式 | DSL | 會話鎖隔離範圍（規則類 vs SP-Sys） |
@@ -222,7 +222,12 @@ rules_dsl:
   F-003: { ref: "R-00 F-003", rule: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_tildes_with_lang) ELSE -> PASS_THROUGH" }
   F-005: { ref: "R-00 F-005", rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag) ELSE_IF file_ext == '.json' THEN REQUIRE(_EOF_key) ELSE_IF is_code_file THEN FORBID(decorative_chars) AND REQUIRE(standard_comment_EOF) ELSE -> PASS_THROUGH" }
   F-006: { ref: "R-00 F-006", rule: "IF has_modifications THEN REQUIRE(status_table_at_bottom) ELSE -> PASS_THROUGH" }
-  F-007: { ref: "R-00 F-007", rule: "IF action == MODIFY_FILE THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND FORBID(patch_mode) ELSE -> PASS_THROUGH" }
+  F-007: { ref: "R-00 F-007", rule: >-
+    IF action == MODIFY_FILE
+    THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND FORBID(patch_mode)
+    AND IF mode == PARTIAL_REPLACE AND file_ext == '.json' THEN FORBID(partial_replace) AND REQUIRE(full_file)
+    AND IF mode == PARTIAL_REPLACE AND file_ext != '.json' THEN REQUIRE(pseudo_eof_extraction)
+    ELSE -> PASS_THROUGH" }
   F-008: { ref: "R-00 F-008", rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY AND FORBID(forbidden_words) ELSE -> PASS_THROUGH" }
   F-009: { ref: "R-00 F-009", rule: "IF response == ANY THEN FORBID(multiline_code_block) UNLESS (is_mantra OR is_file_content) ELSE -> PASS_THROUGH" }
 
