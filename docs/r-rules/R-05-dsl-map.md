@@ -2,9 +2,8 @@
 
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
-| 更新 R-017/018 | R-00 R-017/R-018 | 加入 7 寶對稱架構檢查 | PASS |
-| 更新 F-007 | R-00 F-007 | 加入偽 EOF 提取法與 JSON 限制 | PASS |
-| 新增 F-010 | R-00 F-010 | 定義重命名獨立舊路徑規範 | PASS |
+| 更新 R-010/F-007 | R-00 F-007 | 全面廢除增量與替換，DSL 僅限 FULL_FILE | PASS |
+| 更新 R-027 | R-00 R-027 | 拔除 OLD 字串匹配要求 | PASS |
 ======================== -->
 
 用途：將 R-00 之鐵律映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
@@ -24,7 +23,7 @@
 | R-007 | 鐵律 | 保留散文 | 判斷依結構、語氣，無 predicate 可核 |
 | R-008 | 鐵律 | DSL | 交付後禁自印 K，可判 |
 | R-009 | 鐵律 | DSL | 繁中，可掃描 |
-| R-010 | 鐵律 | DSL | 三軌制交付＋單檔限制，可判 |
+| R-010 | 鐵律 | DSL | 單軌制交付＋單檔限制，可判 |
 | R-011 | 鐵律 | DSL | 斷路器，含輸出位置與豁免剝奪 |
 | R-012 | 鐵律 | DSL | 禁主動宣告結束，可判 |
 | R-013 | 鐵律 | **（已廢除，由雙階段密語取代，無需交付後確認）** | — |
@@ -56,14 +55,14 @@
 | F-004 | 格式 | 保留散文 | 含例外條款，DSL 化反而更複雜 |
 | F-005 | 格式 | DSL | EOF 三行，含 V 為 10 位數、語言例外豁免、源檔邊界防呆、程式碼禁用裝飾字符 |
 | F-006 | 格式 | DSL | 狀態總表位置，可判 |
-| F-007 | 格式 | DSL | Patch 廢除，三軌制交付、APPEND 標記、偽 EOF 提取法與 JSON 禁用限制 |
-| F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略＋lazyPatterns＋allow-delete，可判；含 APPEND_ONLY |
+| F-007 | 格式 | DSL | 單軌制（僅限 FULL_FILE），廢除增量與替換 |
+| F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略＋lazyPatterns，可判 |
 | F-009 | 格式 | DSL | 一鍵複製隔離（僅密語與檔案內容可用多行代碼塊），可判 |
 | F-010 | 格式 | DSL | 重命名防呆（獨立舊路徑區塊），可判 |
 | I-11 | 不變式 | DSL | 會話鎖隔離範圍（規則類 vs SP-Sys） |
 | I-12 | 不變式 | DSL | 事件子集關係 |
 
-**統計**：DSL 化 48 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
+**統計**：DSL 化 47 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -136,7 +135,7 @@ rules_dsl:
     rule: "IF response == ANY THEN REQUIRE(lang == ZH_TW) AND REQUIRE(no_simplified_chars) ELSE -> PASS_THROUGH"
   R-010:
     ref: "R-00 R-010"
-    rule: "IF action == DELIVER_FILE THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND REQUIRE(one_file_per_reply) AND REQUIRE(F-001_header_with_mode) ELSE -> PASS_THROUGH"
+    rule: "IF action == DELIVER_FILE THEN REQUIRE(mode == FULL_FILE) AND REQUIRE(one_file_per_reply) AND REQUIRE(F-001_header_with_mode) ELSE -> PASS_THROUGH"
   R-011:
     ref: "R-00 R-011"
     rule: >-
@@ -190,7 +189,7 @@ rules_dsl:
       AND REQUIRE(sync_table_in_summary)
       AND FORBID(checkpoint_file_level_exemption)
       AND REQUIRE(force_publish_ken_only)
-      AND REQUIRE(force_publish_keeps_eof_and_old_match)
+      AND REQUIRE(force_publish_keeps_eof_match)
       ELSE -> PASS_THROUGH
   R-028:
     ref: "R-00 R-028"
@@ -226,7 +225,7 @@ rules_dsl:
   F-003: { ref: "R-00 F-003", rule: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_tildes_with_lang) ELSE -> PASS_THROUGH" }
   F-005: { ref: "R-00 F-005", rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag) ELSE_IF file_ext == '.json' THEN REQUIRE(_EOF_key) ELSE_IF is_code_file THEN FORBID(decorative_chars) AND REQUIRE(standard_comment_EOF) ELSE -> PASS_THROUGH" }
   F-006: { ref: "R-00 F-006", rule: "IF has_modifications THEN REQUIRE(status_table_at_bottom) ELSE -> PASS_THROUGH" }
-  F-007: { ref: "R-00 F-007", rule: "IF action == MODIFY_FILE THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND FORBID(patch_mode) AND IF mode == PARTIAL_REPLACE AND file_ext == '.json' THEN FORBID(partial_replace) AND REQUIRE(full_file) AND IF mode == PARTIAL_REPLACE AND file_ext != '.json' THEN REQUIRE(pseudo_eof_extraction) ELSE -> PASS_THROUGH" }
+  F-007: { ref: "R-00 F-007", rule: "IF action == MODIFY_FILE THEN REQUIRE(mode == FULL_FILE) AND FORBID(patch_mode) AND FORBID(append_mode) AND FORBID(partial_replace_mode) ELSE -> PASS_THROUGH" }
   F-008: { ref: "R-00 F-008", rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY AND FORBID(forbidden_words) ELSE -> PASS_THROUGH" }
   F-009: { ref: "R-00 F-009", rule: "IF response == ANY THEN FORBID(multiline_code_block) UNLESS (is_mantra OR is_file_content) ELSE -> PASS_THROUGH" }
   F-010: { ref: "R-00 F-010", rule: "IF action == RENAME_FILE THEN REQUIRE(declare_old_path_in_matrix) AND REQUIRE(package_old_path_in_text_block) AND REQUIRE(new_path_from_eof) ELSE -> PASS_THROUGH" }
