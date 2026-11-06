@@ -2,8 +2,9 @@
 
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
-| 新增 R-005 錨點 | R-00 R-005 | 確保後續交付體系規則時強制輸出矩陣 | PASS |
-| 新增 R-028 錨點 | R-00 R-028 | 確保專案交付時有物理鎖宣告 | PASS |
+| 更新 §1.1 映射 | R-025 防硬編碼 | `{pkg_no}-SP.md` 的源檔統改為抓取 `WF-*.md` | PASS |
+| 更新 §4.4 規範 | R-018 專案紀錄 | 明定專案端必須交付對稱 7 寶 | PASS |
+| 更新 §5.6 演算 | R-017、R-018 | 結束對話時強制檢查專案 7 寶是否齊全 | PASS |
 ======================== -->
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄。
 
@@ -27,12 +28,12 @@
 | `02-RP.md` | `AI-kernel/docs/r-rules/R-00-rules.md`、`R-03-terms.md`、`R-02-patterns.md`、`R-04-learning.md`、`R-05-dsl-map.md` | 每次 |
 | `03-UP.md` | `AI-kernel/docs/u-profile/U-00-profile.md` | 每次 |
 | `04-GC.md` | `AI-General/docs/records/GENERAL-CONCLUSION.md` | 通用討論時 |
-| `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-07` | 載入該領域專案時 |
+| `10-WP.md` | `AI-kernel/docs/skills/W/W-00~W-08` | 載入該領域專案時 |
 | `20-SP-Sys.md` | `AI-General/docs/records/` 五檔：`SYSTEM-HANDOFF.md`（含版本）、`PROGRESS.md`、`SYSTEM-CONCLUSION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md` | 體系對話時 |
-| `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md` 與 `P-*.md`。生成時，檔頭會自動注入「體系版本」與「專案狀態版本（WF-HANDOFF 的 V 欄）」。 | 處理專案時 |
+| `{pkg_no}-SP.md` | `AI-General/docs/p{pkg_no}/` 下的 `WF-*.md`。生成時，檔頭會自動注入「體系版本」與「專案狀態版本（WF-HANDOFF 的 V 欄）」。 | 處理專案時 |
 | `{pkg_no}-Code.md` | 專案倉庫原始碼（為**合成物**） | 修改程式碼時 |
 | `23-CHK.md` | `AI-kernel/docs/review/` 四檔 | 交付給合規審判者時 |
-| `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`SYSTEM-ARCHIVE.md`、`R-04-learning.md` | 查歷史時 |
+| `24-HISTORY.md` | `SYSTEM-EVOLUTION.md`、`SYSTEM-REJECTED.md`、`SYSTEM-DEBT.md`、`SYSTEM-ARCHIVE.md`、`R-04-learning.md`、**各專案 `WF-EVOLUTION.md`** | 查歷史時 |
 | `25-INDEX.md` | 全庫所有實體檔案清單 | 需要全局視野時 |
 | `21-INFRA.md` | AI-infra 腳本與呼叫器 | 按需（修改腳本時） |
 | `22-Console.md` | 控制台 `index.html`、`manifest.json`、`sw.js` | 按需 |
@@ -270,14 +271,14 @@ intent_unlock:
 
 ### 4.4 專案紀錄目錄規範（統一大腦模式）
 
-為確保體系與專案的記憶架構一致，所有專案的紀錄檔（`WF-*`）與技術檔（`P-*`）必須統一集中存放於體系倉庫中：
+為確保體系與專案的記憶架構一致，所有專案的紀錄檔（`WF-*`）與技術檔（`WF-*`）必須統一集中存放於體系倉庫中：
 
 > `AI-General/docs/p{專案編號}/`
 
 | 項目 | 規範 |
 |---|---|
 | 存放路徑 | 體系倉庫下的 `docs/p{專案編號}/`（例如 `docs/p90/`） |
-| 包含檔案 | `WF-HANDOFF.md`、`WF-PROGRESS.md`、`WF-CONCLUSION.md`、`WF-STATE-INDEX.md`（自動生成），以及專案技術檔 `P-*.md`。 |
+| 包含檔案 | 統一為 7 寶對稱架構：`WF-HANDOFF.md`、`WF-PROGRESS.md`、`WF-CONCLUSION.md`、`WF-EVOLUTION.md`、`WF-REJECTED.md`、`WF-DEBT.md`、`WF-ARCHIVE.md`，以及專案技術檔 `WF-ARCH.md`、`WF-DATA.md` 等。 |
 | 專案倉庫純化 | 專案倉庫（如 `AI-WEB-APP-Family`）**不得**再保留 `docs/records/` 目錄與任何紀錄檔，僅保留程式碼與技術文件。 |
 | 自動化相容 | 由 `setup-structure.yml` 自動讀取 `docs/p{專案編號}/` 下的紀錄並打包生成。 |
 
@@ -311,7 +312,7 @@ intent_unlock:
 - 執行順序（N4）：**先紀錄更新 → 再 STATE_SEAL → 最後重置**。
 - 若紀錄更新失敗：`SYSTEM-HANDOFF.md` 檔頭 `records_pending` 填 `[檔名]`，仍可終止；不得卡死。
 
-### 5.2 紀錄更新清單（八檔）
+### 5.2 紀錄更新清單（七檔）
 
 | # | 檔案 | 更新內容 | 模式 |
 |---|---|---|---|
@@ -320,10 +321,10 @@ intent_unlock:
 | 3 | `SYSTEM-CONCLUSION.md` | 議題、設計結論、決策 | 全文 |
 | 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
 | 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
-| 6 | `STATE-INDEX.md` | **（已廢除）** 僅留歷史痕跡 | — |
-| 7 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
-| 8 | `GENERAL-CONCLUSION.md` | 通用決策紀錄 | APPEND_ONLY |
+| 6 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
+| 7 | `SYSTEM-EVOLUTION.md` | 重大結構變更與進化史 | APPEND_ONLY |
 
+- `GENERAL-CONCLUSION.md` 為通用對話專屬（若為 general 則取代上述對應檔）。
 - 禁止使用「略」字或省略內容。
 - 版本遞增規則：收到 `體系版本號確定修改` 時，AI 依變更等級自行遞增 `version`。
 
@@ -347,6 +348,7 @@ ssot:
   rejected:   AI-General/docs/records/SYSTEM-REJECTED.md     @ V: {v}
   debt:       AI-General/docs/records/SYSTEM-DEBT.md         @ V: {v}
   archive:    AI-General/docs/records/SYSTEM-ARCHIVE.md      @ V: {v}
+  evolution:  AI-General/docs/records/SYSTEM-EVOLUTION.md    @ V: {v}
   general:    AI-General/docs/records/GENERAL-CONCLUSION.md  @ V: {v}
 delta_summary:
   files_affected:      [{path}]
@@ -371,6 +373,7 @@ next_pointer:
 >       執行專案結束 SOP
 
 - 體系對話（`ai-system`）不套此偵測。
+- **專案必須對齊 7 寶**：`WF-HANDOFF`、`WF-PROGRESS`、`WF-CONCLUSION`、`WF-EVOLUTION`、`WF-REJECTED`、`WF-DEBT`、`WF-ARCHIVE`。
 
 ### 5.6 多目標紀錄更新（D-306／D-307）
 
