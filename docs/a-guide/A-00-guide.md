@@ -322,10 +322,10 @@ intent_unlock:
 | 1 | `SYSTEM-HANDOFF.md` | 會話摘要、重建條件、**`version`**、未完成事項、下一步、`records_pending`、**`W:`（下次編號）** | 全文（≤80 行） |
 | 2 | `PROGRESS.md` | 任務完成度 | 全文 |
 | 3 | `SYSTEM-CONCLUSION.md` | 議題、設計結論、決策 | 全文 |
-| 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | APPEND_ONLY |
-| 5 | `SYSTEM-DEBT.md` | 技術債 | APPEND_ONLY |
-| 6 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | APPEND_ONLY |
-| 7 | `SYSTEM-EVOLUTION.md` | 重大結構變更與進化史 | APPEND_ONLY |
+| 4 | `SYSTEM-REJECTED.md` | 被否決方案及原因 | 完整檔 |
+| 5 | `SYSTEM-DEBT.md` | 技術債 | 完整檔 |
+| 6 | `SYSTEM-ARCHIVE.md` | 累積型檔歸檔 | 完整檔 |
+| 7 | `SYSTEM-EVOLUTION.md` | 重大結構變更與進化史 | 完整檔 |
 
 - `GENERAL-CONCLUSION.md` 為通用對話專屬（若為 general 則取代上述對應檔）。
 - 禁止使用「略」字或省略內容。
@@ -472,6 +472,6 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1793010000
+V: 1793945000
 W: ai-system-009
 ═══ */
