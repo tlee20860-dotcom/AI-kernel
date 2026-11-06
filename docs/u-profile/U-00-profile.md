@@ -1,5 +1,10 @@
 # U-00 使用者通用描述
 
+<!-- === 關聯規則防呆矩陣 ===
+| 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
+| 更新 refusals | R-00 F-007 | 拒絕任何形式的增量與補丁交付，全面單軌制 | PASS |
+======================== -->
+
 用途：Ken 的偏好、決策模式、偏好分層、常用用語、明確拒絕、工作節奏、跨 AI 轉交偏好。
 
 > 本檔為偏好層（UP），不含行為規則。核心目的已移至 IP 信仰。
@@ -101,7 +106,7 @@ refusals:
   - repo_alias             # 必須用實際名稱
   - rewrite_without_reading  # 先看再改
   - repeated_upload        # 改用上傳共享包
-  - patch_delivery         # 語法常出錯，全面改用完整檔交付
+  - patch_or_append_delivery # 語法常出錯，全面廢除增量與局部替換，一律使用完整檔交付
   - abbreviated_mantra     # 密語一律使用 A-00 §2.3 完整寫法，禁止縮寫
 ```
 
@@ -124,9 +129,9 @@ workflow:
   
   # 實際操作流程
   manual_workflow: 
-    - "AI 輸出檔案內容（支援雙階段密語與局部替換）"
+    - "AI 輸出檔案內容（單軌制完整檔）"
     - "前端控制台海關檢查（繁簡、禁用詞、EOF 提取）"
-    - "受控替換與發布（自動推回 GitHub 源檔）"
+    - "受控替換與發布（全量覆寫，自動推回 GitHub 源檔）"
     - "手動觸發 AI-infra 的 setup-structure.yml Action"
     - "下載最新的合成物並開啟新對話"
 ```
@@ -145,6 +150,6 @@ workflow:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/u-profile/U-00-profile.md
-V: 1792913600
-W: ai-system-005
+V: 1793946000
+W: ai-system-009
 ═══ */
