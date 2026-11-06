@@ -2,10 +2,9 @@
 
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
-| 更新 R-005 映射 | R-00 R-005 | 加入 `matrix_if_applicable` 條件，對齊結構化關聯鎖 | PASS |
-| 新增 R-028 映射 | R-00 R-028 | 加入專案交付物理鎖的 DSL，限制實體宣告格式 | PASS |
-| 更新 F-007 映射 | R-00 F-007 | 加入偽 EOF 提取法邏輯與 JSON 禁用局部替換之判斷 | PASS |
-| 新增 F-009 映射 | R-00 F-009 | 加入一鍵複製隔離原則的 DSL | PASS |
+| 更新 R-017/018 | R-00 R-017/R-018 | 加入 7 寶對稱架構檢查 | PASS |
+| 更新 F-007 | R-00 F-007 | 加入偽 EOF 提取法與 JSON 限制 | PASS |
+| 新增 F-010 | R-00 F-010 | 定義重命名獨立舊路徑規範 | PASS |
 ======================== -->
 
 用途：將 R-00 之鐵律映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
@@ -32,11 +31,11 @@
 | R-014 | 鐵律 | DSL | 五行標頭，可掃描；含身份解耦 |
 | R-015 | 鐵律 | 保留散文 | 權限階梯＋降級＋溢出三層，DSL 化易失真 |
 | R-016 | 鐵律 | DSL | 四大危機分類，可判 |
-| R-017 | 鐵律 | DSL | 專案缺 SOP 三選項，可判 |
-| R-018 | 鐵律 | DSL | affected 多目標更新，可判 |
+| R-017 | 鐵律 | DSL | 專案 7 寶缺失三選項，可判 |
+| R-018 | 鐵律 | DSL | affected 多目標更新，含 7 寶檢查，可判 |
 | R-019 | 鐵律 | DSL（checklist） | 觸發條件可列舉清單；獨立提問優先於清單 |
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
-| R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷 |
+| R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷；含重命名防呆 |
 | R-025 | 鐵律 | DSL（checklist） | 防硬編碼，檢查邏輯標識符與映射表 |
 | R-026 | 鐵律 | DSL | 會話鎖與隔離區；區分規則類與狀態包 |
 | R-027 | 鐵律 | DSL（checklist） | 檢查點可列舉；同步對照表可掃描；含無豁免與強制發布權責可判 |
@@ -60,10 +59,11 @@
 | F-007 | 格式 | DSL | Patch 廢除，三軌制交付、APPEND 標記、偽 EOF 提取法與 JSON 禁用限制 |
 | F-008 | 格式 | DSL | 章節數＋行數＋嚴格無省略＋lazyPatterns＋allow-delete，可判；含 APPEND_ONLY |
 | F-009 | 格式 | DSL | 一鍵複製隔離（僅密語與檔案內容可用多行代碼塊），可判 |
+| F-010 | 格式 | DSL | 重命名防呆（獨立舊路徑區塊），可判 |
 | I-11 | 不變式 | DSL | 會話鎖隔離範圍（規則類 vs SP-Sys） |
 | I-12 | 不變式 | DSL | 事件子集關係 |
 
-**統計**：DSL 化 46 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
+**統計**：DSL 化 48 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -81,7 +81,7 @@
 | 混合包阻擋 | 規則 | DSL | input 包含合法與非法檔 → return reject |
 | 歸檔 | 流程 | DSL（checklist） | 門檻可列舉 |
 
-**詞表說明**：詞 65、78、79、80、81、85、86、94、95、96、97 新增，SSOT 在 `R-03-terms.md`，本表不重複映射。密語 SSOT 在 `A-00 §2.3`，本表僅引用完整寫法。
+**詞表說明**：詞 65、78、79、80、81、85、86、94、95、96、97 等，SSOT 在 `R-03-terms.md`，本表不重複映射。密語 SSOT 在 `A-00 §2.3`，本表僅引用完整寫法。
 
 ---
 
@@ -154,10 +154,10 @@ rules_dsl:
     rule: "IF change_type IN [architecture, core_module, fsm, automation_script] THEN REQUIRE(adversarial_review_4_categories) ELSE -> PASS_THROUGH"
   R-017:
     ref: "R-00 R-017"
-    rule: "IF end_signal AND project.handoff_sop == false THEN REQUIRE(options_A_B_C) ELSE -> PASS_THROUGH"
+    rule: "IF end_signal AND project.7_files_complete == false THEN REQUIRE(options_A_B_C) ELSE -> PASS_THROUGH"
   R-018:
     ref: "R-00 R-018"
-    rule: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target) ELSE -> PASS_THROUGH"
+    rule: "IF end_signal AND delivery_list_contains_system_or_project THEN REQUIRE(update_each_affected_target) AND REQUIRE(project_7_files_checked) ELSE -> PASS_THROUGH"
   R-019:
     ref: "R-00 R-019"
     rule: "IF delivery_contains_structural_change IN [split_file, add_file, delete_file, new_pattern_or_role, fsm_or_layering_change, change_records_dir] THEN REQUIRE(independent_prompt_before_list) AND REQUIRE(prompt_evolution_record) ELSE -> PASS_THROUGH"
@@ -166,7 +166,11 @@ rules_dsl:
     rule: "IF event == E_USER_FORCE_ABORT THEN EXECUTE(stop_all_output) -> TRANSITION_TO(DISCUSS) ELSE -> PASS_THROUGH"
   R-024:
     ref: "R-00 R-024"
-    rule: "IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade) THEN REQUIRE(deliver_refactor_map_first) -> REQUIRE(wait_for_approval) -> STOP_INFERENCE ELSE -> PASS_THROUGH"
+    rule: >-
+      IF requirement_contains(rewrite OR refactor OR restructure OR merge OR split OR upgrade OR rename)
+      THEN REQUIRE(deliver_refactor_map_first) -> REQUIRE(wait_for_approval)
+      AND IF requirement_contains(rename) THEN REQUIRE(F-010_old_path_highlight)
+      ELSE -> PASS_THROUGH
   R-025:
     ref: "R-00 R-025"
     rule: "IF document_or_code_contains(hardcoded_filename OR hardcoded_path) THEN FORBID(commit) AND REQUIRE(use_logical_identifier) ELSE -> PASS_THROUGH"
@@ -222,14 +226,10 @@ rules_dsl:
   F-003: { ref: "R-00 F-003", rule: "IF output == FILE_CONTENT THEN REQUIRE(wrap_in_tildes_with_lang) ELSE -> PASS_THROUGH" }
   F-005: { ref: "R-00 F-005", rule: "IF file_ext == '.md' THEN REQUIRE(EOF_tag) ELSE_IF file_ext == '.json' THEN REQUIRE(_EOF_key) ELSE_IF is_code_file THEN FORBID(decorative_chars) AND REQUIRE(standard_comment_EOF) ELSE -> PASS_THROUGH" }
   F-006: { ref: "R-00 F-006", rule: "IF has_modifications THEN REQUIRE(status_table_at_bottom) ELSE -> PASS_THROUGH" }
-  F-007: { ref: "R-00 F-007", rule: >-
-    IF action == MODIFY_FILE
-    THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND FORBID(patch_mode)
-    AND IF mode == PARTIAL_REPLACE AND file_ext == '.json' THEN FORBID(partial_replace) AND REQUIRE(full_file)
-    AND IF mode == PARTIAL_REPLACE AND file_ext != '.json' THEN REQUIRE(pseudo_eof_extraction)
-    ELSE -> PASS_THROUGH" }
+  F-007: { ref: "R-00 F-007", rule: "IF action == MODIFY_FILE THEN REQUIRE(mode IN [FULL_FILE, APPEND_ONLY, PARTIAL_REPLACE]) AND FORBID(patch_mode) AND IF mode == PARTIAL_REPLACE AND file_ext == '.json' THEN FORBID(partial_replace) AND REQUIRE(full_file) AND IF mode == PARTIAL_REPLACE AND file_ext != '.json' THEN REQUIRE(pseudo_eof_extraction) ELSE -> PASS_THROUGH" }
   F-008: { ref: "R-00 F-008", rule: "IF mode == FULL_FILE THEN ENFORCE_STRUCTURAL_INTEGRITY AND FORBID(forbidden_words) ELSE -> PASS_THROUGH" }
   F-009: { ref: "R-00 F-009", rule: "IF response == ANY THEN FORBID(multiline_code_block) UNLESS (is_mantra OR is_file_content) ELSE -> PASS_THROUGH" }
+  F-010: { ref: "R-00 F-010", rule: "IF action == RENAME_FILE THEN REQUIRE(declare_old_path_in_matrix) AND REQUIRE(package_old_path_in_text_block) AND REQUIRE(new_path_from_eof) ELSE -> PASS_THROUGH" }
 
   # ── FSM 密語事件（SSOT: A-00 §2.3）──
   E_USER_CONFIRM_DELIVER: "IF trigger_word == '方案已落實，提供交付相關的清單，待確認' THEN TRANSITION_TO(DELIVER)"
