@@ -3,6 +3,7 @@
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
 | 更新 refusals | R-00 F-007 | 拒絕任何形式的增量與補丁交付，全面單軌制 | PASS |
+| 修改 upload_pack | A-00 §2.1 | 開放連結啟動，改為 ALLOWED | PASS |
 ======================== -->
 
 用途：Ken 的偏好、決策模式、偏好分層、常用用語、明確拒絕、工作節奏、跨 AI 轉交偏好。
@@ -23,7 +24,7 @@ communication:
   propose_before_deliver: MANDATORY  # 先方案後交付，不得直接改檔
   discussion_options: YES            # 討論階段可提供選項，若使用者有自己的想法可直接輸入
   delivery_confirmation: MANDATORY   # 交付階段僅提示輸入密語，不提供 A/B/C/D 選項
-  upload_pack_first: MANDATORY       # 不貼 URL，改上傳對應編號共享包
+  upload_pack_first: ALLOWED         # 允許上傳實體共享包，或使用純文字連結（Raw Link）。涉及源碼修改與核心交付時，強烈建議使用實體檔。
   address: "Ken"                     # 直接稱呼英文名
   domain_classification: MANDATORY   # 專案按領域分（W／V／D／M／E）
   repo_naming: ACTUAL_NAME           # 禁止「Repo A／Repo B」代稱
@@ -80,7 +81,7 @@ terms:
   通用大腦: "IP／AP／RP／UP 四包"
   領域技能包: "WP／VP／DP／MP 等領域"
   啟動包: "AP"
-  上傳共享包: "不貼 URL，改上傳對應編號共享包"
+  上傳共享包: "可上傳實體檔或提供連結（Raw Link）"
   通用包: "通用決策合成包（檔名見 A-00 §1.1）"
   91包/92包: "對應編號之專案狀態合併包"
   "xxx 合併包": "該專案完整狀態／代碼合併包（原 S 包）"
@@ -105,7 +106,7 @@ refusals:
   - question_separate_from_options  # 必須一起呈現
   - repo_alias             # 必須用實際名稱
   - rewrite_without_reading  # 先看再改
-  - repeated_upload        # 改用上傳共享包
+  - repeated_upload        # 改用上傳共享包或連結
   - patch_or_append_delivery # 語法常出錯，全面廢除增量與局部替換，一律使用完整檔交付
   - abbreviated_mantra     # 密語一律使用 A-00 §2.3 完整寫法，禁止縮寫
 ```
@@ -150,6 +151,6 @@ workflow:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/u-profile/U-00-profile.md
-V: 1793946000
-W: ai-system-009
+V: 1794055000
+W: ai-system-010
 ═══ */
