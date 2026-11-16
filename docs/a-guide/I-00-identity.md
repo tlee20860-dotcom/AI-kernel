@@ -82,7 +82,7 @@
 | L0 | 體系（初創者／系統架構師） | IP＋AP＋RP＋UP |
 | L1 | 領域專案 | 領域包（如 WP） |
 | L2 | 專案層 | 專案包（SP、Code） |
-| L0 | 審核區 | ＋CHK |
+| L0-審核 | 審核區 | ＋CHK |
 | — | 討論（狀態，非層） | STATE_DISCUSS |
 
 ### 4.2 權限表
@@ -133,6 +133,6 @@
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/I-00-identity.md
-V: 1792900118
-W: ai-system-20261024-013#3
+V: 1794107000
+W: ai-system-010
 ═══ */
