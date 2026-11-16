@@ -4,6 +4,7 @@
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
 | 更新 R-010/F-007 | R-00 F-007 | 全面廢除增量與替換，DSL 僅限 FULL_FILE | PASS |
 | 更新 R-027 | R-00 R-027 | 拔除 OLD 字串匹配要求 | PASS |
+| 更新 R-026/I-13 | A-00 I-13 | 新增連結快照鎖定與禁止重抓的 DSL 映射 | PASS |
 ======================== -->
 
 用途：將 R-00 之鐵律映射為結構化 DSL，或標「保留散文＋理由」；並映射 R-00 §七 審查機制。本檔為 Phase 1 前置交付物。
@@ -36,7 +37,7 @@
 | R-022 | 鐵律 | DSL | 強制中止觸發，可判 |
 | R-024 | 鐵律 | DSL（checklist） | 重構地圖要素可列舉；「架構升級」保留語意判斷；含重命名防呆 |
 | R-025 | 鐵律 | DSL（checklist） | 防硬編碼，檢查邏輯標識符與映射表 |
-| R-026 | 鐵律 | DSL | 會話鎖與隔離區；區分規則類與狀態包 |
+| R-026 | 鐵律 | DSL | 會話鎖與隔離區；區分規則類與狀態包；含連結快照拒絕重抓 |
 | R-027 | 鐵律 | DSL（checklist） | 檢查點可列舉；同步對照表可掃描；含無豁免與強制發布權責可判 |
 | R-028 | 鐵律 | DSL | 專案交付物理鎖，檢查宣告格式與包裹符號，可判 |
 | S-001 | 提問 | DSL（checklist） | 三欄可掃描 |
@@ -61,8 +62,9 @@
 | F-010 | 格式 | DSL | 重命名防呆（獨立舊路徑區塊），可判 |
 | I-11 | 不變式 | DSL | 會話鎖隔離範圍（規則類 vs SP-Sys） |
 | I-12 | 不變式 | DSL | 事件子集關係 |
+| I-13 | 不變式 | DSL | 連結快照鎖定，禁止中途重抓 URL |
 
-**統計**：DSL 化 47 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
+**統計**：DSL 化 48 條；保留散文 4 條（R-007、R-015、S-007、F-004）。
 
 ### 1.1 R-00 其他區塊映射
 
@@ -180,6 +182,8 @@ rules_dsl:
       THEN FORBID(load_content) -> EXECUTE(move_to_quarantine) -> OUTPUT_WARNING
       ELSE_IF file_type == SP_SYS
       THEN APPLY(I-04_version_max_load)
+      ELSE_IF receive_link_refetch_request_from_user
+      THEN FORBID(refetch) -> OUTPUT_WARNING("為避免熱更新混亂，請開啟新對話並提供新連結，或直接上傳實體檔。")
       ELSE -> PASS_THROUGH
   R-027:
     ref: "R-00 R-027"
@@ -218,6 +222,7 @@ rules_dsl:
   # ── 不變式（I）──
   I-11: { ref: "A-00 I-11", rule: "IF session_lock_established AND receive_rule_file_diff_V THEN REQUIRE(quarantine) ELSE_IF receive_SP_SYS THEN APPLY(I-04) ELSE -> PASS_THROUGH" }
   I-12: { ref: "A-00 I-12", rule: "IF state == ANY THEN REQUIRE(SUBSET(§2.5_events, §2.3_events) AND SUBSET(§2.4_events, §2.3_events)) ELSE -> PASS_THROUGH" }
+  I-13: { ref: "A-00 I-13", rule: "IF initialized_via_url AND session_lock_established THEN FORBID(refetch_same_url) ELSE -> PASS_THROUGH" }
 
   # ── 格式規範（F）──
   F-001: { ref: "R-00 F-001", rule: "IF output == DELIVER THEN REQUIRE_HEADER(repo, path, type, mode, replace_relation, author, version) ELSE -> PASS_THROUGH" }
@@ -287,6 +292,6 @@ rules_dsl:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/r-rules/R-05-dsl-map.md
-V: 1793010000
-W: ai-system-009
+V: 1794052000
+W: ai-system-010
 ═══ */
