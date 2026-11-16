@@ -5,6 +5,7 @@
 | 修改 D2 演算法 | R-019 | FSM 啟動變更，已宣告記入進化史 | PASS |
 | 加入連結讀取 | R-011 | 讀取失敗視同缺包，觸發斷路器 | PASS |
 | 新增 I-13 | R-026 | 連結快照鎖定，禁止中途重抓 URL | PASS |
+| 補充實體檔優先 | R-005 | 避免連結與實體檔同時存在時的混淆 | PASS |
 ======================== -->
 
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄。
@@ -113,15 +114,17 @@ pre_condition_guard:
 >   urls = extract_raw_links(inputText)
 >   for logical_name in ORDER:
 >       filename = 解析(A-00 §1.1, logical_name)
->       if filename ∉ uploaded:
->           // 新增：嘗試從連結讀取
->           target_url = urls.find(u => u.endsWith(filename))
->           if target_url:
->               content = fetch(target_url)
->               if content is VALID:
->                   uploaded.add(filename, content)
->                   continue
->           索取單一缺失檔 filename（或提示連結無效，請上傳實體檔）；停留 NATIVE；return
+>       // 新增：實體檔優先級高於連結
+>       if filename ∈ uploaded:
+>           continue
+>       // 新增：實體檔缺失時，嘗試從連結讀取
+>       target_url = urls.find(u => u.endsWith(filename))
+>       if target_url:
+>           content = fetch(target_url)
+>           if content is VALID:
+>               uploaded.add(filename, content)
+>               continue
+>       索取單一缺失檔 filename（或提示連結無效，請上傳實體檔）；停留 NATIVE；return
 >   啟動 FSM（E_LOAD_PACKAGE）
 >
 > 收到上傳後：重跑全盤掃描，直到四檔齊全。
@@ -488,7 +491,7 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1794050000
+V: 1794053000
 W: ai-system-010
 ═══ */
 <!-- === FILE END: AI-kernel/docs/a-guide/A-00-guide.md === -->
