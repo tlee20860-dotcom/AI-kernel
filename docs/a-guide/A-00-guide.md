@@ -2,7 +2,9 @@
 
 <!-- === 關聯規則防呆矩陣 ===
 | 本次修改項 | 命中關聯條文 | 具體防呆約束／隔離措施 | 檢核結果 |
-| 移除局部替換說明 | R-00 F-007 | 同步單軌制，移除生命週期中的舊語意 | PASS |
+| 修改 D2 演算法 | R-019 | FSM 啟動變更，已宣告記入進化史 | PASS |
+| 加入連結讀取 | R-011 | 讀取失敗視同缺包，觸發斷路器 | PASS |
+| 新增 I-13 | R-026 | 連結快照鎖定，禁止中途重抓 URL | PASS |
 ======================== -->
 
 用途：FSM、不變式、生命週期、錨點、專案 SOP、結束與交接 SOP、轉交機制、決策記錄。
@@ -107,15 +109,28 @@ pre_condition_guard:
 
 > enterSystem(uploaded, inputText):
 >   ORDER = ['IP', 'AP', 'RP', 'UP']
+>   // 新增：從 inputText 提取 raw 連結
+>   urls = extract_raw_links(inputText)
 >   for logical_name in ORDER:
 >       filename = 解析(A-00 §1.1, logical_name)
 >       if filename ∉ uploaded:
->           索取單一缺失檔 filename；停留 NATIVE；return
+>           // 新增：嘗試從連結讀取
+>           target_url = urls.find(u => u.endsWith(filename))
+>           if target_url:
+>               content = fetch(target_url)
+>               if content is VALID:
+>                   uploaded.add(filename, content)
+>                   continue
+>           索取單一缺失檔 filename（或提示連結無效，請上傳實體檔）；停留 NATIVE；return
 >   啟動 FSM（E_LOAD_PACKAGE）
 >
 > 收到上傳後：重跑全盤掃描，直到四檔齊全。
 
 - 每次僅索取第一個缺失檔，禁止一次列出多個上傳項。
+
+**連結快照鎖定（Link Snapshot Lock）**：
+- 若透過「純文字連結」啟動體系，AI MUST 在開場時將抓取到的內容視為「靜態快照」載入記憶。
+- 會話鎖建立後，AI MUST NOT 在後續對話中主動去重新抓取或讀取同一個 URL，以防範中途源檔更新導致的熱更新混亂。
 
 ### 2.2 狀態集 S（6 態）
 
@@ -195,6 +210,7 @@ pre_condition_guard:
 | I-10 | 未收到兩階段密語，不得進入 `EXECUTE` 輸出檔案。 |
 | I-11 | 會話鎖建立後，若中途收到與會話鎖版本不同之規則類體系檔（IP／AP／RP／UP），MUST 移入隔離區並忽略；體系狀態包（SP-Sys）依 I-04 處理（同版沿用、新版取 Version 大者並提示）。 |
 | I-12 | §2.5 轉移表所用事件 MUST 為 §2.3 事件集之子集；§2.4 ρ 函數所用事件亦 MUST 為 §2.3 之子集。反向不要求。 |
+| I-13 | 連結快照鎖定：透過連結啟動之體系，會話鎖建立後，AI MUST NOT 主動重新抓取同一 URL。若需新規則，必須開啟新對話。 |
 
 ### 2.7 情境模擬（防呆驗證）
 
@@ -472,6 +488,7 @@ next_pointer:
 
 /* ═══ EOF ═══
 F: AI-kernel/docs/a-guide/A-00-guide.md
-V: 1793945000
-W: ai-system-009
+V: 1794050000
+W: ai-system-010
 ═══ */
+<!-- === FILE END: AI-kernel/docs/a-guide/A-00-guide.md === -->
